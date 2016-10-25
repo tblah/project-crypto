@@ -12,3 +12,6 @@ To generate documentation:
 ```
 cargo doc 
 ```
+
+The main gotcha (so far) is to remember to call [sodiumoxide::init](https://dnaq.github.io/sodiumoxide/sodiumoxide/fn.init.html).
+
