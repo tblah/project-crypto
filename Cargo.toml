@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Tom Eccles"]
 description = "Cryptography for my third year project"
 licence = "GPL-3"
-readme = "todo"
-repository = "todo"
+readme = "README.md"
+repository = "https://github.com/tblah/project-crypto"
 
 [dependencies]
 sodiumoxide = "0.0.12"
