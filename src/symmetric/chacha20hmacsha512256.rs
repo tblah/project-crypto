@@ -1,6 +1,6 @@
 //! This module provides an implementation of AuthenticatedEncryptorDecryptor
 //! 
-//! # Crypto
+//! # Cryptography
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
 //! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper).
 //!
@@ -28,7 +28,6 @@
 //!
 //! assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
 //! # }
-
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -130,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn authentecated_encryptor_decryptor() {
+    fn authenticated_encryptor_decryptor() {
         let e_k = chacha20::gen_key();
         let a_k = hmacsha512256::gen_key();
         let nonce = chacha20::gen_nonce();
@@ -147,7 +146,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn authentecated_encryptor_decryptor_corrupted_auth() {
+    fn authenticated_encryptor_decryptor_corrupted_auth() {
         let e_k = chacha20::gen_key();
         let a_k = hmacsha512256::gen_key();
         let a_k2 = hmacsha512256::gen_key();
@@ -166,7 +165,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn authentecated_encryptor_decryptor_corrupted_enc() {
+    fn authenticated_encryptor_decryptor_corrupted_enc() {
         let e_k = chacha20::gen_key();
         let e_k2 = chacha20::gen_key();
         let a_k = hmacsha512256::gen_key();

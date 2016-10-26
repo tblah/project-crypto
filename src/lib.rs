@@ -1,7 +1,7 @@
 //! # Proj_crypto library crate.
 //! 
 //! This library contains the cryptography used in my third year project at university.
-//! **Please do not use this for anything important. This cryptography has not been reveiwed.**
+//! **Please do not use this for anything important. This cryptography has not been reviewed.**
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
