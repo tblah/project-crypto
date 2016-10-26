@@ -1,5 +1,5 @@
 [package]
-name = "proj-crypto"
+name = "proj_crypto"
 version = "0.1.0"
 authors = ["Tom Eccles"]
 description = "Cryptography for my third year project"

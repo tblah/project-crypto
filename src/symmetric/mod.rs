@@ -1,7 +1,6 @@
-//! # Proj_crypto library crate.
+//! Symmetric encryption module.
 //! 
-//! This library contains the cryptography used in my third year project at university.
-//! **Please do not use this for anything important. This cryptography has not been reveiwed.**
+//! This module provides an interface for symmetric (secret key) cryptography. 
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -15,14 +14,14 @@
     You should have received a copy of the GNU General Public License
     along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
-#![crate_name = "proj_crypto"]
-#![crate_type = "lib"]
-#![warn(missing_docs)]
-#![warn(non_upper_case_globals)]
-#![warn(non_camel_case_types)]
-#![warn(unused_qualifications)]
+/// Trait representing something that does symmetric authenticated encryption.
+pub trait AuthenticatedEncryptorDecryptor {
+    /// Authenticates the message and then encrypts the message and the authentication token. The result is returned as a vector.
+    fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8>;
 
-extern crate sodiumoxide;
+    /// Decrypts the cipher text and then attempts to authenticate it. 
+    fn decrypt_and_authenticate(&self, ciphertext: &[u8]) -> Option<Vec<u8>>;
+}
 
-pub mod symmetric;
-pub mod asymmetric;
+/// Module containing an in implementation of AuthenticatedEncryptorDecryptor. 
+pub mod chacha20hmacsha512256;

@@ -1,5 +1,5 @@
 [root]
-name = "proj-crypto"
+name = "proj_crypto"
 version = "0.1.0"
 dependencies = [
  "sodiumoxide 0.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
