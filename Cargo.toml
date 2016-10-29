@@ -3,6 +3,7 @@ name = "proj_crypto"
 version = "0.1.0"
 authors = ["Tom Eccles"]
 description = "Cryptography for my third year project"
+documentation = "https://tblah.github.io/project-crypto/"
 licence = "GPL-3"
 readme = "README.md"
 repository = "https://github.com/tblah/project-crypto"
