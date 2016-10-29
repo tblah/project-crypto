@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ChaCha20HmacSha512256","Struct for storing the state of the symmetric encryption and authentication system. You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it's types go out of scope."]]});

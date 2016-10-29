@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["get_data_from_digest","utility function to get the data out of an sha256::Digest"]],"struct":[["KeyIteration","Struct for storing a symmetric key alongside it's message number. From this information any later key can be derived. Drop is implemented for this structure so that it's memory is zeroed out when it goes out of scope."]]});
