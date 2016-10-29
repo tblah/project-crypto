@@ -1,8 +1,8 @@
-//! This module provides an implementation of AuthenticatedEncryptorDecryptor
+//! This module provides an implementation of AuthenticatedEncryptorDecryptor.
 //! 
 //! # Cryptography
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
-//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper).
+//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.
 //!
 //! # Example
 //! ```
@@ -47,7 +47,7 @@ use sodiumoxide::crypto::auth::hmacsha512256;
 pub use super::AuthenticatedEncryptorDecryptor;
 
 /// Struct for storing the state of the symmetric encryption and authentication system.
-/// You do not need to worry about destroying this data properly as this is done within sodiumoxide whenever it's types go out of scope.
+/// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it's types go out of scope.
 pub struct ChaCha20HmacSha512256 {
     encryption_key: chacha20::Key,
     authentication_key: hmacsha512256::Key,

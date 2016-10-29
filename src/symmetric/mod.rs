@@ -25,3 +25,6 @@ pub trait AuthenticatedEncryptorDecryptor {
 
 /// Module containing an in implementation of AuthenticatedEncryptorDecryptor. 
 pub mod chacha20hmacsha512256;
+
+
+pub mod ratchet;
