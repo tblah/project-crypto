@@ -210,53 +210,12 @@
 <span id="166">166</span>
 <span id="167">167</span>
 <span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! This module provides an implementation of AuthenticatedEncryptorDecryptor.</span>
 <span class='doccomment'>//! </span>
 <span class='doccomment'>//! # Cryptography</span>
 <span class='doccomment'>//! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.</span>
 <span class='doccomment'>//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it&#39;s introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! # Example</span>
-<span class='doccomment'>//! ```</span>
-<span class='doccomment'>//! # extern crate sodiumoxide;</span>
-<span class='doccomment'>//! # extern crate proj_crypto;</span>
-<span class='doccomment'>//! # use proj_crypto::symmetric::chacha20hmacsha512256::*;</span>
-<span class='doccomment'>//! use sodiumoxide::crypto::stream::chacha20;</span>
-<span class='doccomment'>//! use sodiumoxide::crypto::auth::hmacsha512256;</span>
-<span class='doccomment'>//! use std::str;</span>
-<span class='doccomment'>//! </span>
-<span class='doccomment'>//! # fn main() {</span>
-<span class='doccomment'>//! sodiumoxide::init();</span>
-<span class='doccomment'>//! let e_k = chacha20::gen_key();       // encryption key</span>
-<span class='doccomment'>//! let a_k = hmacsha512256::gen_key();  // authentication key</span>
-<span class='doccomment'>//! let nonce = chacha20::gen_nonce();   // nonce</span>
-<span class='doccomment'>//! let dut = ChaCha20HmacSha512256::new(e_k, a_k, nonce);</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! let message = &quot;hello world!&quot;;</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! let transmitted_message = dut.decrypt_and_authenticate(&amp;ciphertext).unwrap();</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! assert_eq!(message, str::from_utf8(&amp;transmitted_message).unwrap());</span>
-<span class='doccomment'>//! # }</span>
 
 <span class='comment'>/*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -273,33 +232,25 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>stream</span>::<span class='ident'>chacha20</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>AuthenticatedEncryptorDecryptor</span>;
+<span class='doccomment'>/// Trait representing something that does symmetric authenticated encryption.</span>
+<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>AuthenticatedEncryptorDecryptor</span> {
+    <span class='doccomment'>/// Authenticates the message and then encrypts the message and the authentication token. The result is returned as a vector.</span>
+    <span class='kw'>fn</span> <span class='ident'>authenticate_and_encrypt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>;
+
+    <span class='doccomment'>/// Decrypts the cipher text and then attempts to authenticate it. </span>
+    <span class='kw'>fn</span> <span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span>;
+}
 
 <span class='doccomment'>/// Struct for storing the state of the symmetric encryption and authentication system.</span>
 <span class='doccomment'>/// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it&#39;s types go out of scope.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ChaCha20HmacSha512256</span> {
     <span class='ident'>encryption_key</span>: <span class='ident'>chacha20</span>::<span class='ident'>Key</span>,
-    <span class='ident'>authentication_key</span>: <span class='ident'>hmacsha512256</span>::<span class='ident'>Key</span>,
+    <span class='ident'>authentication_key</span>: <span class='ident'>hmacsha512256</span>::<span class='ident'>Key</span>, 
     <span class='ident'>nonce</span>: <span class='ident'>chacha20</span>::<span class='ident'>Nonce</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>ChaCha20HmacSha512256</span> {
     <span class='doccomment'>/// Constructor for ChaCha20HmacSha512256.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// # Example</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # extern crate sodiumoxide;</span>
-    <span class='doccomment'>/// # extern crate proj_crypto;</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// # use proj_crypto::symmetric::chacha20hmacsha512256::ChaCha20HmacSha512256;</span>
-    <span class='doccomment'>/// use sodiumoxide::crypto::stream::chacha20;</span>
-    <span class='doccomment'>/// use sodiumoxide::crypto::auth::hmacsha512256;</span>
-    <span class='doccomment'>/// </span>
-    <span class='doccomment'>/// # fn main() {</span>
-    <span class='doccomment'>/// sodiumoxide::init();</span>
-    <span class='doccomment'>/// ChaCha20HmacSha512256::new( chacha20::gen_key(), hmacsha512256::gen_key(), chacha20::gen_nonce() );</span>
-    <span class='doccomment'>/// # }</span>
-    <span class='doccomment'>/// ``` </span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>encryption_key</span>: <span class='ident'>chacha20</span>::<span class='ident'>Key</span>, <span class='ident'>authentication_key</span>: <span class='ident'>hmacsha512256</span>::<span class='ident'>Key</span>, <span class='ident'>nonce</span>: <span class='ident'>chacha20</span>::<span class='ident'>Nonce</span>) <span class='op'>-&gt;</span> <span class='ident'>ChaCha20HmacSha512256</span> {
         <span class='ident'>ChaCha20HmacSha512256</span> {
             <span class='ident'>encryption_key</span>: <span class='ident'>encryption_key</span>,
@@ -344,6 +295,7 @@
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>stream</span>::<span class='ident'>chacha20</span>;
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
+    <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>new</span>() {
@@ -407,6 +359,22 @@
         <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>());
 
         <span class='kw'>let</span> <span class='ident'>transmitted_message</span> <span class='op'>=</span> <span class='ident'>dut_corrupted</span>.<span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>).<span class='ident'>unwrap</span>();
+
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>).<span class='ident'>unwrap</span>());
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>old_example</span>() {
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>e_k</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>gen_key</span>();       <span class='comment'>// encryption key</span>
+        <span class='kw'>let</span> <span class='ident'>a_k</span> <span class='op'>=</span> <span class='ident'>hmacsha512256</span>::<span class='ident'>gen_key</span>();  <span class='comment'>// authentication key</span>
+        <span class='kw'>let</span> <span class='ident'>nonce</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>gen_nonce</span>();   <span class='comment'>// nonce</span>
+        <span class='kw'>let</span> <span class='ident'>dut</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>, <span class='ident'>a_k</span>, <span class='ident'>nonce</span>);
+
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
+
+        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>());
+        <span class='kw'>let</span> <span class='ident'>transmitted_message</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>).<span class='ident'>unwrap</span>();
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>).<span class='ident'>unwrap</span>());
     }
