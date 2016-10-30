@@ -82,13 +82,13 @@ impl KeyIteration {
 
     /// Get the n'th key from the current KeyIteration object.
     /// The n requested must be greater than or equal to the N of the KeyIteration object.
-    pub fn nth_key(&self, new_n: u16) -> sha256::Digest {
+    pub fn nth_key(&self, new_n: u16) -> [u8; sha256::DIGESTBYTES] {
         assert!(self.number <= new_n);
 
         if self.number == new_n {
-            self.key
+            get_data_from_digest(&self.key)
         } else {
-            hash_n_times(&self.key, new_n - self.number)
+            get_data_from_digest( &hash_n_times(&self.key, new_n - self.number) )
         }
     }
 
@@ -143,7 +143,7 @@ mod tests {
         // hash three times
         let expected_key = sha256::hash( &super::get_data_from_digest(&sha256::hash( &super::get_data_from_digest(&sha256::hash(&key)))));
 
-        assert_eq!(expected_key, key3);
+        assert_eq!(expected_key, sha256::Digest(key3));
     }
 
     #[test]

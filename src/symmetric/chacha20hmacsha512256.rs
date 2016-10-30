@@ -3,31 +3,6 @@
 //! # Cryptography
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
 //! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.
-//!
-//! # Example
-//! ```
-//! # extern crate sodiumoxide;
-//! # extern crate proj_crypto;
-//! # use proj_crypto::symmetric::chacha20hmacsha512256::*;
-//! use sodiumoxide::crypto::stream::chacha20;
-//! use sodiumoxide::crypto::auth::hmacsha512256;
-//! use std::str;
-//! 
-//! # fn main() {
-//! sodiumoxide::init();
-//! let e_k = chacha20::gen_key();       // encryption key
-//! let a_k = hmacsha512256::gen_key();  // authentication key
-//! let nonce = chacha20::gen_nonce();   // nonce
-//! let dut = ChaCha20HmacSha512256::new(e_k, a_k, nonce);
-//!
-//! let message = "hello world!";
-//!
-//! let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
-//!
-//! let transmitted_message = dut.decrypt_and_authenticate(&ciphertext).unwrap();
-//!
-//! assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
-//! # }
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -44,33 +19,25 @@
 use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 
-pub use super::AuthenticatedEncryptorDecryptor;
+/// Trait representing something that does symmetric authenticated encryption.
+pub trait AuthenticatedEncryptorDecryptor {
+    /// Authenticates the message and then encrypts the message and the authentication token. The result is returned as a vector.
+    fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8>;
+
+    /// Decrypts the cipher text and then attempts to authenticate it. 
+    fn decrypt_and_authenticate(&self, ciphertext: &[u8]) -> Option<Vec<u8>>;
+}
 
 /// Struct for storing the state of the symmetric encryption and authentication system.
 /// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it's types go out of scope.
 pub struct ChaCha20HmacSha512256 {
     encryption_key: chacha20::Key,
-    authentication_key: hmacsha512256::Key,
+    authentication_key: hmacsha512256::Key, 
     nonce: chacha20::Nonce,
 }
 
 impl ChaCha20HmacSha512256 {
     /// Constructor for ChaCha20HmacSha512256.
-    ///
-    /// # Example
-    /// ```
-    /// # extern crate sodiumoxide;
-    /// # extern crate proj_crypto;
-    ///
-    /// # use proj_crypto::symmetric::chacha20hmacsha512256::ChaCha20HmacSha512256;
-    /// use sodiumoxide::crypto::stream::chacha20;
-    /// use sodiumoxide::crypto::auth::hmacsha512256;
-    /// 
-    /// # fn main() {
-    /// sodiumoxide::init();
-    /// ChaCha20HmacSha512256::new( chacha20::gen_key(), hmacsha512256::gen_key(), chacha20::gen_nonce() );
-    /// # }
-    /// ``` 
     pub fn new(encryption_key: chacha20::Key, authentication_key: hmacsha512256::Key, nonce: chacha20::Nonce) -> ChaCha20HmacSha512256 {
         ChaCha20HmacSha512256 {
             encryption_key: encryption_key,
@@ -115,6 +82,7 @@ mod tests {
     use sodiumoxide::crypto::stream::chacha20;
     use sodiumoxide::crypto::auth::hmacsha512256;
     use std::str;
+    use sodiumoxide;
 
     #[test]
     fn new() {
@@ -178,6 +146,22 @@ mod tests {
         let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
 
         let transmitted_message = dut_corrupted.decrypt_and_authenticate(&ciphertext).unwrap();
+
+        assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
+    }
+
+    #[test]
+    fn old_example() {
+        sodiumoxide::init();
+        let e_k = chacha20::gen_key();       // encryption key
+        let a_k = hmacsha512256::gen_key();  // authentication key
+        let nonce = chacha20::gen_nonce();   // nonce
+        let dut = ChaCha20HmacSha512256::new(e_k, a_k, nonce);
+
+        let message = "hello world!";
+
+        let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
+        let transmitted_message = dut.decrypt_and_authenticate(&ciphertext).unwrap();
 
         assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
     }
