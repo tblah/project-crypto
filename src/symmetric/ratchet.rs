@@ -76,7 +76,7 @@ impl KeyIteration {
 
         KeyIteration {
             key: out_key,
-            number: 1,
+            number: 0,
         }
     }
 
@@ -88,7 +88,7 @@ impl KeyIteration {
         if self.number == new_n {
             get_data_from_digest(&self.key)
         } else {
-            get_data_from_digest( &hash_n_times(&self.key, new_n - self.number) )
+            get_data_from_digest( &hash_n_times(&self.key, new_n - (self.number + 1)) ) // the +1 because 0 = 1 hash
         }
     }
 
@@ -99,7 +99,7 @@ impl KeyIteration {
     pub fn increase_iter_to(&mut self, new_n: u16) {
         assert!(self.number < new_n);
 
-        self.key = hash_n_times(&self.key, new_n - self.number);
+        self.key = hash_n_times(&self.key, new_n - (self.number + 1)); // the +1 because 0 = 1 hash
         self.number = new_n;
     }
 }
@@ -132,7 +132,7 @@ mod tests {
         let key_iteration = KeyIteration::first(&key);
 
         assert_eq!(sha256::hash(&key), key_iteration.key);
-        assert_eq!(1, key_iteration.number);
+        assert_eq!(0, key_iteration.number);
     }
 
     #[test]

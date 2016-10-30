@@ -8,7 +8,7 @@
 //!
 //! ## Secure Channel
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
-//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.
+//! Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used from the ratcheting system.
 //!
 //! # Example
 //! ```
@@ -23,13 +23,23 @@
 //! let message = "hello world!";
 //! let k_e = &randombytes::randombytes(32);
 //! let k_a = &randombytes::randombytes(32);
-//! let message_number: u16 = 2;
+//! let message_number: u16 = 0;
 //!
-//! let state = State::new(k_e, k_a);
+//! let mut state = State::new(k_e, k_a);
 //! let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);
 //! let plaintext = state.authenticated_decryption(&ciphertext, message_number).unwrap();
 //!
 //! assert_eq!(message, str::from_utf8(&plaintext).unwrap());
+//!
+//! // some stuff happens. Now we no-longer need keys for messages numbered less than 8
+//!
+//! state.increase_iter_to(8);
+//!
+//! // crypto still works for message numbers starting from 8:
+//! let ciphertext8 = state.authenticated_encryption(message.as_bytes(), 8);
+//! let plaintext8 = state.authenticated_decryption(&ciphertext8, 8).unwrap();
+//!
+//! assert_eq!(message, str::from_utf8(&plaintext8).unwrap());
 //! # }
 //! ```
 
@@ -57,15 +67,14 @@ use sodiumoxide::crypto::hash::sha256;
 use std::mem;
 
 /// Stores the state of the symmetric encryption system.
-/// Both of the member objects clean themselves up properly when they go out of scope so we do not need to worry about that on this level
-/// Allows KeyIteration to be wrapped around ChaCha20HmacSha512256
+/// Memory is zeroed when this goes out of scope
 pub struct State {
-    encryption_key: KeyIteration,
-    authentication_key: KeyIteration,
+    encryption_key: KeyIteration, // implements drop()
+    authentication_key: KeyIteration, // implements drop()
 }
 
 impl State {
-    /// Create a new symmetric::State object
+    /// Create a new symmetric::State object.
     pub fn new(encryption_key: &[u8], authentication_key: &[u8]) -> State {
         State {
             encryption_key: KeyIteration::first(encryption_key),
@@ -75,8 +84,6 @@ impl State {
 
     /// (private) Creates a new ChaCha20HmacSha512256 object
     fn create_encryption_object(&self, message_number: u16) -> ChaCha20HmacSha512256 {
-        // message number validity checking is done within KeyIteration
-
         // using unwraps because everything was designed to always be the correct length
         let e_k = chacha20::Key::from_slice( &self.encryption_key.nth_key(message_number) ).unwrap();
         let a_k = hmacsha512256::Key::from_slice( &self.authentication_key.nth_key(message_number) ).unwrap();
@@ -98,15 +105,15 @@ impl State {
         self.create_encryption_object(message_number).authenticate_and_encrypt(message)
     }
 
-    /// Attempt authenticated decryption
-    /// Similar semantics to encryption
+    /// Attempt authenticated decryption.
+    /// Similar semantics to encryption.
     pub fn authenticated_decryption(&self, ciphertext: &[u8], message_number: u16) -> Option<Vec<u8>> {
         self.create_encryption_object(message_number).decrypt_and_authenticate(ciphertext)
     }
  
     /// Destroy keys up to number n.
     /// This is done so that future compromises cannot compromise messages under the older keys and as a performance optimisation to reduce the number of hashes required.
-    /// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: e.g. their messages have all been acknowledged.
+    /// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: for example their messages have all been acknowledged.
     pub fn increase_iter_to(&mut self, new_n: u16) {
         self.encryption_key.increase_iter_to(new_n);
         self.authentication_key.increase_iter_to(new_n);

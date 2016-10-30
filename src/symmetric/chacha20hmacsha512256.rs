@@ -2,7 +2,7 @@
 //! 
 //! # Cryptography
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
-//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.
+//! Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
