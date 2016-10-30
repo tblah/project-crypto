@@ -189,6 +189,21 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! This module implements ratcheting for use with an AuthenticatedEncryptorDecryptor.</span>
 <span class='doccomment'>//! </span>
@@ -215,9 +230,9 @@
 <span class='doccomment'>/// Drop is implemented for this structure so that it&#39;s memory is zeroed out when it goes out of scope.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>KeyIteration</span> {
     <span class='doccomment'>/// A Key appropriate to use with an AuthenticatedEncryptorDecryptor</span>
-    <span class='kw'>pub</span> <span class='ident'>key</span>: <span class='ident'>sha256</span>::<span class='ident'>Digest</span>,
+    <span class='ident'>key</span>: <span class='ident'>sha256</span>::<span class='ident'>Digest</span>,
     <span class='doccomment'>/// The message number (the number of times that the initial shared secret was hashed)</span>
-    <span class='kw'>pub</span> <span class='ident'>number</span>: <span class='ident'>u16</span>,
+    <span class='ident'>number</span>: <span class='ident'>u16</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>KeyIteration</span> {
@@ -235,8 +250,8 @@
     }
 }
 
-<span class='doccomment'>/// utility function to get the data out of an sha256::Digest</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_data_from_digest</span>(<span class='ident'>digest</span>: <span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>Digest</span>) <span class='op'>-&gt;</span> [<span class='ident'>u8</span>; <span class='ident'>sha256</span>::<span class='ident'>DIGESTBYTES</span>] {
+<span class='doccomment'>/// private utility function to get the data out of an sha256::Digest</span>
+<span class='kw'>fn</span> <span class='ident'>get_data_from_digest</span>(<span class='ident'>digest</span>: <span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>Digest</span>) <span class='op'>-&gt;</span> [<span class='ident'>u8</span>; <span class='ident'>sha256</span>::<span class='ident'>DIGESTBYTES</span>] {
     <span class='kw'>let</span> <span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>Digest</span>(<span class='ident'>return_val</span>) <span class='op'>=</span> <span class='ident'>digest</span>;
 
     <span class='ident'>return_val</span>
@@ -262,24 +277,7 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>KeyIteration</span> {
-    <span class='doccomment'>/// Construct the first key</span>
-    <span class='doccomment'>/// # Example</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # extern crate sodiumoxide;</span>
-    <span class='doccomment'>/// # extern crate proj_crypto;</span>
-    <span class='doccomment'>/// # use proj_crypto::symmetric::ratchet::*;</span>
-    <span class='doccomment'>/// use sodiumoxide::crypto::hash::sha256;</span>
-    <span class='doccomment'>/// use sodiumoxide::randombytes;</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// # fn main() {</span>
-    <span class='doccomment'>/// sodiumoxide::init();</span>
-    <span class='doccomment'>/// let key = &amp;randombytes::randombytes(32);</span>
-    <span class='doccomment'>/// let key_iteration = KeyIteration::first(&amp;key);</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// assert_eq!(sha256::hash(&amp;key), key_iteration.key);</span>
-    <span class='doccomment'>/// assert_eq!(1, key_iteration.number);</span>
-    <span class='doccomment'>/// # }</span>
-    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// Construct the first key. in_key will usually be the shared secret resulting from an asymmetric key exchange</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>first</span>(<span class='ident'>in_key</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>KeyIteration</span> {
         <span class='kw'>let</span> <span class='ident'>out_key</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='ident'>in_key</span>);
 
@@ -289,33 +287,27 @@
         }
     }
 
-    <span class='doccomment'>/// n&#39;th KeyIteration from a previous KeyIteration</span>
-    <span class='doccomment'>/// # Example</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # extern crate sodiumoxide;</span>
-    <span class='doccomment'>/// # extern crate proj_crypto;</span>
-    <span class='doccomment'>/// # use proj_crypto::symmetric::ratchet::*;</span>
-    <span class='doccomment'>/// use sodiumoxide::crypto::hash::sha256;</span>
-    <span class='doccomment'>/// use sodiumoxide::randombytes;</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// # fn main() {</span>
-    <span class='doccomment'>/// sodiumoxide::init();</span>
-    <span class='doccomment'>/// let key = &amp;randombytes::randombytes(32);</span>
-    <span class='doccomment'>/// let key_iteration = KeyIteration::first(&amp;key).nth_iter(3);</span>
-    <span class='doccomment'>/// // hash three times</span>
-    <span class='doccomment'>/// let expected_key = sha256::hash( &amp;get_data_from_digest(&amp;sha256::hash( &amp;get_data_from_digest(&amp;sha256::hash(&amp;key)))));</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// assert_eq!(expected_key, key_iteration.key);</span>
-    <span class='doccomment'>/// assert_eq!(3, key_iteration.number);</span>
-    <span class='doccomment'>/// # }</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>nth_iter</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>new_n</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>KeyIteration</span> {
+    <span class='doccomment'>/// Get the n&#39;th key from the current KeyIteration object.</span>
+    <span class='doccomment'>/// The n requested must be greater than or equal to the N of the KeyIteration object.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>nth_key</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>new_n</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>sha256</span>::<span class='ident'>Digest</span> {
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>number</span> <span class='op'>&lt;=</span> <span class='ident'>new_n</span>);
+
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>number</span> <span class='op'>==</span> <span class='ident'>new_n</span> {
+            <span class='self'>self</span>.<span class='ident'>key</span>
+        } <span class='kw'>else</span> {
+            <span class='ident'>hash_n_times</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>key</span>, <span class='ident'>new_n</span> <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>number</span>)
+        }
+    }
+
+    <span class='doccomment'>/// shift the KeyIteration object to a later iteration. This cannot be undone.</span>
+    <span class='doccomment'>/// This is done so that future compromises cannot compromise messages under the older keys and as a performance optimisation to reduce the number of hashes required.</span>
+    <span class='doccomment'>/// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: e.g. their messages have all been acknowledged.</span>
+    <span class='doccomment'>/// TODO: this is not thread-safe</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>increase_iter_to</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>new_n</span>: <span class='ident'>u16</span>) {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>number</span> <span class='op'>&lt;</span> <span class='ident'>new_n</span>);
 
-        <span class='ident'>KeyIteration</span> {
-            <span class='ident'>key</span>: <span class='ident'>hash_n_times</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>key</span>, <span class='ident'>new_n</span> <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>number</span>),
-            <span class='ident'>number</span>: <span class='ident'>new_n</span>,
-        }
+        <span class='self'>self</span>.<span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>hash_n_times</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>key</span>, <span class='ident'>new_n</span> <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>number</span>);
+        <span class='self'>self</span>.<span class='ident'>number</span> <span class='op'>=</span> <span class='ident'>new_n</span>;
     }
 }
 
@@ -324,16 +316,54 @@
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>randombytes</span>;
+    <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>sha256</span>;
     <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sodiumoxide</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='attribute'>#[<span class='ident'>should_panic</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>nth_iter_bad_new_n</span>() {
+    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_must_use</span>)]</span> <span class='comment'>// the panic line looks unused</span>
+    <span class='kw'>fn</span> <span class='ident'>nth_key_bad_n</span>() {
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>key0</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>key_iteration</span> <span class='op'>=</span> <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='ident'>key0</span>);
+        <span class='ident'>key_iteration</span>.<span class='ident'>increase_iter_to</span>(<span class='number'>5</span>);
+
+        <span class='comment'>// panic:</span>
+        <span class='ident'>key_iteration</span>.<span class='ident'>nth_key</span>(<span class='number'>4</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>first</span>() {
         <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
         <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
-        <span class='kw'>let</span> <span class='ident'>key_iter5</span> <span class='op'>=</span> <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='ident'>key</span>).<span class='ident'>nth_iter</span>(<span class='number'>5</span>);
+        <span class='kw'>let</span> <span class='ident'>key_iteration</span> <span class='op'>=</span> <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>);
 
-        <span class='ident'>key_iter5</span>.<span class='ident'>nth_iter</span>(<span class='number'>4</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>), <span class='ident'>key_iteration</span>.<span class='ident'>key</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>1</span>, <span class='ident'>key_iteration</span>.<span class='ident'>number</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>nth_key</span>() {
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='ident'>key3</span> <span class='op'>=</span> <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>).<span class='ident'>nth_key</span>(<span class='number'>3</span>);
+        <span class='comment'>// hash three times</span>
+        <span class='kw'>let</span> <span class='ident'>expected_key</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>hash</span>( <span class='kw-2'>&amp;</span><span class='kw'>super</span>::<span class='ident'>get_data_from_digest</span>(<span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>hash</span>( <span class='kw-2'>&amp;</span><span class='kw'>super</span>::<span class='ident'>get_data_from_digest</span>(<span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>)))));
+
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>expected_key</span>, <span class='ident'>key3</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>increase_iter_to</span>() {
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>key0</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>key_iteration</span> <span class='op'>=</span> <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='ident'>key0</span>);
+        <span class='ident'>key_iteration</span>.<span class='ident'>increase_iter_to</span>(<span class='number'>3</span>);
+        <span class='comment'>// hash three times</span>
+        <span class='kw'>let</span> <span class='ident'>expected_key</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>hash</span>( <span class='kw-2'>&amp;</span><span class='kw'>super</span>::<span class='ident'>get_data_from_digest</span>(<span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>hash</span>( <span class='kw-2'>&amp;</span><span class='kw'>super</span>::<span class='ident'>get_data_from_digest</span>(<span class='kw-2'>&amp;</span><span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>key0</span>)))));
+
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>expected_key</span>, <span class='ident'>key_iteration</span>.<span class='ident'>key</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>3</span>, <span class='ident'>key_iteration</span>.<span class='ident'>number</span>);
     }
 }
     
