@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["State","Stores the state of the symmetric encryption system. Both of the member objects clean themselves up properly when they go out of scope so we do not need to worry about that on this level Allows KeyIteration to be wrapped around ChaCha20HmacSha512256"]]});
+initSidebarItems({"struct":[["State","Stores the state of the symmetric encryption system. Memory is zeroed when this goes out of scope"]]});

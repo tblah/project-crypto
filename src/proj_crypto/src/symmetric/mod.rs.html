@@ -199,6 +199,13 @@
 <span id="155">155</span>
 <span id="156">156</span>
 <span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Symmetric encryption module.</span>
 <span class='doccomment'>//! </span>
@@ -210,7 +217,7 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Secure Channel</span>
 <span class='doccomment'>//! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.</span>
-<span class='doccomment'>//! Then we encrypt using ChaCha20. ChaCha20 over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it&#39;s introductory paper). The key is used directly. You most likely want to hash it before using it here. You may need to also hash the nonce before using it here.</span>
+<span class='doccomment'>//! Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it&#39;s introductory paper). The key is used from the ratcheting system.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Example</span>
 <span class='doccomment'>//! ```</span>
@@ -225,13 +232,23 @@
 <span class='doccomment'>//! let message = &quot;hello world!&quot;;</span>
 <span class='doccomment'>//! let k_e = &amp;randombytes::randombytes(32);</span>
 <span class='doccomment'>//! let k_a = &amp;randombytes::randombytes(32);</span>
-<span class='doccomment'>//! let message_number: u16 = 2;</span>
+<span class='doccomment'>//! let message_number: u16 = 0;</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! let state = State::new(k_e, k_a);</span>
+<span class='doccomment'>//! let mut state = State::new(k_e, k_a);</span>
 <span class='doccomment'>//! let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);</span>
 <span class='doccomment'>//! let plaintext = state.authenticated_decryption(&amp;ciphertext, message_number).unwrap();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! assert_eq!(message, str::from_utf8(&amp;plaintext).unwrap());</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // some stuff happens. Now we no-longer need keys for messages numbered less than 8</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! state.increase_iter_to(8);</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // crypto still works for message numbers starting from 8:</span>
+<span class='doccomment'>//! let ciphertext8 = state.authenticated_encryption(message.as_bytes(), 8);</span>
+<span class='doccomment'>//! let plaintext8 = state.authenticated_decryption(&amp;ciphertext8, 8).unwrap();</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! assert_eq!(message, str::from_utf8(&amp;plaintext8).unwrap());</span>
 <span class='doccomment'>//! # }</span>
 <span class='doccomment'>//! ```</span>
 
@@ -259,15 +276,14 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 
 <span class='doccomment'>/// Stores the state of the symmetric encryption system.</span>
-<span class='doccomment'>/// Both of the member objects clean themselves up properly when they go out of scope so we do not need to worry about that on this level</span>
-<span class='doccomment'>/// Allows KeyIteration to be wrapped around ChaCha20HmacSha512256</span>
+<span class='doccomment'>/// Memory is zeroed when this goes out of scope</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>State</span> {
-    <span class='ident'>encryption_key</span>: <span class='ident'>KeyIteration</span>,
-    <span class='ident'>authentication_key</span>: <span class='ident'>KeyIteration</span>,
+    <span class='ident'>encryption_key</span>: <span class='ident'>KeyIteration</span>, <span class='comment'>// implements drop()</span>
+    <span class='ident'>authentication_key</span>: <span class='ident'>KeyIteration</span>, <span class='comment'>// implements drop()</span>
 }
 
 <span class='kw'>impl</span> <span class='ident'>State</span> {
-    <span class='doccomment'>/// Create a new symmetric::State object</span>
+    <span class='doccomment'>/// Create a new symmetric::State object.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>encryption_key</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>authentication_key</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>State</span> {
         <span class='ident'>State</span> {
             <span class='ident'>encryption_key</span>: <span class='ident'>KeyIteration</span>::<span class='ident'>first</span>(<span class='ident'>encryption_key</span>),
@@ -277,8 +293,6 @@
 
     <span class='doccomment'>/// (private) Creates a new ChaCha20HmacSha512256 object</span>
     <span class='kw'>fn</span> <span class='ident'>create_encryption_object</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message_number</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>ChaCha20HmacSha512256</span> {
-        <span class='comment'>// message number validity checking is done within KeyIteration</span>
-
         <span class='comment'>// using unwraps because everything was designed to always be the correct length</span>
         <span class='kw'>let</span> <span class='ident'>e_k</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>Key</span>::<span class='ident'>from_slice</span>( <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>encryption_key</span>.<span class='ident'>nth_key</span>(<span class='ident'>message_number</span>) ).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>a_k</span> <span class='op'>=</span> <span class='ident'>hmacsha512256</span>::<span class='ident'>Key</span>::<span class='ident'>from_slice</span>( <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>authentication_key</span>.<span class='ident'>nth_key</span>(<span class='ident'>message_number</span>) ).<span class='ident'>unwrap</span>();
@@ -300,15 +314,15 @@
         <span class='self'>self</span>.<span class='ident'>create_encryption_object</span>(<span class='ident'>message_number</span>).<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>)
     }
 
-    <span class='doccomment'>/// Attempt authenticated decryption</span>
-    <span class='doccomment'>/// Similar semantics to encryption</span>
+    <span class='doccomment'>/// Attempt authenticated decryption.</span>
+    <span class='doccomment'>/// Similar semantics to encryption.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>authenticated_decryption</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>message_number</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>create_encryption_object</span>(<span class='ident'>message_number</span>).<span class='ident'>decrypt_and_authenticate</span>(<span class='ident'>ciphertext</span>)
     }
  
     <span class='doccomment'>/// Destroy keys up to number n.</span>
     <span class='doccomment'>/// This is done so that future compromises cannot compromise messages under the older keys and as a performance optimisation to reduce the number of hashes required.</span>
-    <span class='doccomment'>/// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: e.g. their messages have all been acknowledged.</span>
+    <span class='doccomment'>/// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: for example their messages have all been acknowledged.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>increase_iter_to</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>new_n</span>: <span class='ident'>u16</span>) {
         <span class='self'>self</span>.<span class='ident'>encryption_key</span>.<span class='ident'>increase_iter_to</span>(<span class='ident'>new_n</span>);
         <span class='self'>self</span>.<span class='ident'>authentication_key</span>.<span class='ident'>increase_iter_to</span>(<span class='ident'>new_n</span>);
