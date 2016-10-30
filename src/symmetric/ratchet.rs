@@ -23,9 +23,9 @@ use sodiumoxide;
 /// Drop is implemented for this structure so that it's memory is zeroed out when it goes out of scope.
 pub struct KeyIteration {
     /// A Key appropriate to use with an AuthenticatedEncryptorDecryptor
-    pub key: sha256::Digest,
+    key: sha256::Digest,
     /// The message number (the number of times that the initial shared secret was hashed)
-    pub number: u16,
+    number: u16,
 }
 
 impl Drop for KeyIteration {
@@ -43,8 +43,8 @@ impl Drop for KeyIteration {
     }
 }
 
-/// utility function to get the data out of an sha256::Digest
-pub fn get_data_from_digest(digest: &sha256::Digest) -> [u8; sha256::DIGESTBYTES] {
+/// private utility function to get the data out of an sha256::Digest
+fn get_data_from_digest(digest: &sha256::Digest) -> [u8; sha256::DIGESTBYTES] {
     let &sha256::Digest(return_val) = digest;
 
     return_val
@@ -70,24 +70,7 @@ fn hash_n_times(d: &sha256::Digest, n: u16) -> sha256::Digest {
 }
 
 impl KeyIteration {
-    /// Construct the first key
-    /// # Example
-    /// ```
-    /// # extern crate sodiumoxide;
-    /// # extern crate proj_crypto;
-    /// # use proj_crypto::symmetric::ratchet::*;
-    /// use sodiumoxide::crypto::hash::sha256;
-    /// use sodiumoxide::randombytes;
-    ///
-    /// # fn main() {
-    /// sodiumoxide::init();
-    /// let key = &randombytes::randombytes(32);
-    /// let key_iteration = KeyIteration::first(&key);
-    ///
-    /// assert_eq!(sha256::hash(&key), key_iteration.key);
-    /// assert_eq!(1, key_iteration.number);
-    /// # }
-    /// ```
+    /// Construct the first key. in_key will usually be the shared secret resulting from an asymmetric key exchange
     pub fn first(in_key: &[u8]) -> KeyIteration {
         let out_key = sha256::hash(in_key);
 
@@ -97,33 +80,27 @@ impl KeyIteration {
         }
     }
 
-    /// n'th KeyIteration from a previous KeyIteration
-    /// # Example
-    /// ```
-    /// # extern crate sodiumoxide;
-    /// # extern crate proj_crypto;
-    /// # use proj_crypto::symmetric::ratchet::*;
-    /// use sodiumoxide::crypto::hash::sha256;
-    /// use sodiumoxide::randombytes;
-    ///
-    /// # fn main() {
-    /// sodiumoxide::init();
-    /// let key = &randombytes::randombytes(32);
-    /// let key_iteration = KeyIteration::first(&key).nth_iter(3);
-    /// // hash three times
-    /// let expected_key = sha256::hash( &get_data_from_digest(&sha256::hash( &get_data_from_digest(&sha256::hash(&key)))));
-    ///
-    /// assert_eq!(expected_key, key_iteration.key);
-    /// assert_eq!(3, key_iteration.number);
-    /// # }
-    /// ```
-    pub fn nth_iter(&self, new_n: u16) -> KeyIteration {
+    /// Get the n'th key from the current KeyIteration object.
+    /// The n requested must be greater than or equal to the N of the KeyIteration object.
+    pub fn nth_key(&self, new_n: u16) -> sha256::Digest {
+        assert!(self.number <= new_n);
+
+        if self.number == new_n {
+            self.key
+        } else {
+            hash_n_times(&self.key, new_n - self.number)
+        }
+    }
+
+    /// shift the KeyIteration object to a later iteration. This cannot be undone.
+    /// This is done so that future compromises cannot compromise messages under the older keys and as a performance optimisation to reduce the number of hashes required.
+    /// As it cannot be undone, this should not be done until the previous iterations of the keys are no-longer needed: e.g. their messages have all been acknowledged.
+    /// TODO: this is not thread-safe
+    pub fn increase_iter_to(&mut self, new_n: u16) {
         assert!(self.number < new_n);
 
-        KeyIteration {
-            key: hash_n_times(&self.key, new_n - self.number),
-            number: new_n,
-        }
+        self.key = hash_n_times(&self.key, new_n - self.number);
+        self.number = new_n;
     }
 }
 
@@ -132,16 +109,54 @@ impl KeyIteration {
 mod tests {
     use super::*;
     use sodiumoxide::randombytes;
+    use sodiumoxide::crypto::hash::sha256;
     extern crate sodiumoxide;
 
     #[test]
     #[should_panic]
-    fn nth_iter_bad_new_n() {
+    #[allow(unused_must_use)] // the panic line looks unused
+    fn nth_key_bad_n() {
+        sodiumoxide::init();
+        let key0 = &randombytes::randombytes(32);
+        let mut key_iteration = KeyIteration::first(key0);
+        key_iteration.increase_iter_to(5);
+
+        // panic:
+        key_iteration.nth_key(4);
+    }
+
+    #[test]
+    fn first() {
         sodiumoxide::init();
         let key = &randombytes::randombytes(32);
-        let key_iter5 = KeyIteration::first(key).nth_iter(5);
+        let key_iteration = KeyIteration::first(&key);
 
-        key_iter5.nth_iter(4);
+        assert_eq!(sha256::hash(&key), key_iteration.key);
+        assert_eq!(1, key_iteration.number);
+    }
+
+    #[test]
+    fn nth_key() {
+        sodiumoxide::init();
+        let key = &randombytes::randombytes(32);
+        let key3 = KeyIteration::first(&key).nth_key(3);
+        // hash three times
+        let expected_key = sha256::hash( &super::get_data_from_digest(&sha256::hash( &super::get_data_from_digest(&sha256::hash(&key)))));
+
+        assert_eq!(expected_key, key3);
+    }
+
+    #[test]
+    fn increase_iter_to() {
+        sodiumoxide::init();
+        let key0 = &randombytes::randombytes(32);
+        let mut key_iteration = KeyIteration::first(key0);
+        key_iteration.increase_iter_to(3);
+        // hash three times
+        let expected_key = sha256::hash( &super::get_data_from_digest(&sha256::hash( &super::get_data_from_digest(&sha256::hash(&key0)))));
+
+        assert_eq!(expected_key, key_iteration.key);
+        assert_eq!(3, key_iteration.number);
     }
 }
     
