@@ -147,13 +147,45 @@ mod tests {
     use std::str;
 
     #[test]
-    fn encrypt_decrypt() {
+    fn encrypt_decrypt_zero() {
         sodiumoxide::init();
         let message = "hello world!";
         let k_e = &randombytes::randombytes(32);
         let k_a = &randombytes::randombytes(32);
-        let message_number: u16 = 2;
+        let message_number: u16 = 0; // important to test the boundary
 
+
+        let state = State::new(k_e, k_a);
+        let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);
+        let plaintext = state.authenticated_decryption(&ciphertext, message_number).unwrap();
+
+        assert_eq!(message, str::from_utf8(&plaintext).unwrap());
+    }
+
+    fn random_message_number() -> u16 {
+        let message_number_bytes = randombytes::randombytes(2);
+        let mut message_number: u16 = 0;
+
+        // turn two bytes into a u16
+        message_number |= ((message_number_bytes[0]) as u16) << 8;
+        message_number |= (message_number_bytes[1]) as u16;
+
+        // check the message number is valid
+        if message_number == u16::max_value() {
+            random_message_number() // generate a new one
+        } else {
+            message_number // this one is good enough
+        }
+    }
+
+
+    #[test]
+    fn encrypt_decrypt_random() { // this might look like it would be slower but my i5-3570k can do 2 971 550 SHA512 hashes of this size in one second (openssl speed). This is a lot more than u16::max_value()
+        sodiumoxide::init();
+        let message = "hello world!";
+        let k_e = &randombytes::randombytes(32);
+        let k_a = &randombytes::randombytes(32);
+        let message_number = random_message_number();
 
         let state = State::new(k_e, k_a);
         let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);

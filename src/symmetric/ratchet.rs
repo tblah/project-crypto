@@ -17,6 +17,7 @@
 
 use sodiumoxide::crypto::hash::sha256;
 use std::mem;
+use std::u16;
 use sodiumoxide;
 
 /// Struct for storing a symmetric key alongside it's message number. From this information any later key can be derived.
@@ -84,6 +85,7 @@ impl KeyIteration {
     /// The n requested must be greater than or equal to the N of the KeyIteration object.
     pub fn nth_key(&self, new_n: u16) -> [u8; sha256::DIGESTBYTES] {
         assert!(self.number <= new_n);
+        assert!(self.number < u16::max_value()); // we add 1 to it 
 
         if self.number == new_n {
             get_data_from_digest(&self.key)
@@ -98,6 +100,7 @@ impl KeyIteration {
     /// TODO: this is not thread-safe
     pub fn increase_iter_to(&mut self, new_n: u16) {
         assert!(self.number < new_n);
+        assert!(self.number < u16::max_value()); // we add 1 to it
 
         self.key = hash_n_times(&self.key, new_n - (self.number + 1)); // the +1 because 0 = 1 hash
         self.number = new_n;
