@@ -45,16 +45,30 @@ impl ChaCha20HmacSha512256 {
             nonce: nonce,
         }
     }
+
+    /// plain authentication for packet meta-data
+    pub fn plain_auth_tag(&self, message: &[u8]) -> [u8; hmacsha512256::TAGBYTES] {
+        let auth_tag = hmacsha512256::authenticate(message, &self.authentication_key);
+        let hmacsha512256::Tag(auth_slice) = auth_tag;
+
+        auth_slice
+    }
+
+    /// verify an authentication tag on some data
+    pub fn verify_auth(&self, auth_tag: &[u8], message: &[u8]) -> bool {
+        assert_eq!(auth_tag.len(), hmacsha512256::TAGBYTES);
+
+        hmacsha512256::verify(&hmacsha512256::Tag::from_slice(&auth_tag).unwrap(), message, &self.authentication_key)
+    }
 }
 
 impl AuthenticatedEncryptorDecryptor for ChaCha20HmacSha512256 {
     fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8> {
-        let auth_tag = hmacsha512256::authenticate(message, &self.authentication_key);
-        let hmacsha512256::Tag(ref auth_slice) = auth_tag;
+        let auth_slice = self.plain_auth_tag(message);
 
         let mut cleartext = vec![];
         cleartext.extend_from_slice(message);
-        cleartext.extend_from_slice(auth_slice);
+        cleartext.extend_from_slice(&auth_slice);
 
         chacha20::stream_xor(&cleartext, &self.nonce, &self.encryption_key)
     }
@@ -65,7 +79,7 @@ impl AuthenticatedEncryptorDecryptor for ChaCha20HmacSha512256 {
         let plaintext = chacha20::stream_xor(ciphertext, &self.nonce, &self.encryption_key);
         let (message, auth_tag) = plaintext.split_at(ciphertext.len() - hmacsha512256::TAGBYTES);
 
-        if hmacsha512256::verify(&hmacsha512256::Tag::from_slice(auth_tag).unwrap(), message, &self.authentication_key) {
+        if self.verify_auth(auth_tag, message) {
             let mut ret = vec![];
             ret.extend_from_slice(message);
             Some(ret)
@@ -164,5 +178,20 @@ mod tests {
         let transmitted_message = dut.decrypt_and_authenticate(&ciphertext).unwrap();
 
         assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
+    }
+
+    #[test]
+    fn authentication() {
+        sodiumoxide::init();
+        let e_k = chacha20::gen_key();
+        let a_k = hmacsha512256::gen_key();
+        let nonce = chacha20::gen_nonce();
+        let dut = ChaCha20HmacSha512256::new(e_k, a_k, nonce);
+
+        let message = "hello world!".as_bytes();
+
+        let auth_tag = dut.plain_auth_tag(message);
+
+        assert!(dut.verify_auth(&auth_tag, message));
     }
 }

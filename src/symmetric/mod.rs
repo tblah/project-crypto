@@ -10,7 +10,7 @@
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
 //! Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it's introductory paper). The key is used from the ratcheting system.
 //!
-//! # Example
+//! # Example (Encrypted Authentication)
 //! ```
 //! # extern crate sodiumoxide;
 //! # extern crate proj_crypto;
@@ -40,6 +40,29 @@
 //! let plaintext8 = state.authenticated_decryption(&ciphertext8, 8).unwrap();
 //!
 //! assert_eq!(message, str::from_utf8(&plaintext8).unwrap());
+//! # }
+//! ```
+//!
+//! # Example (Encrypted Authentication)
+//! ```
+//! # extern crate sodiumoxide;
+//! # extern crate proj_crypto;
+//! # use proj_crypto::symmetric::*;
+//! use sodiumoxide::randombytes;
+//! use std::str;
+//! 
+//! # fn main() {
+//! sodiumoxide::init();
+//! let message = "hello world!".as_bytes();
+//! let k_e = &randombytes::randombytes(32);
+//! let k_a = &randombytes::randombytes(32);
+//! let message_number: u16 = 0;
+//!
+//! let mut state = State::new(k_e, k_a);
+//! let state = State::new(k_e, k_a);
+//! let auth_tag = state.plain_auth_tag(message, message_number);
+//!
+//! assert!( state.verify_auth_tag(&auth_tag, message, message_number) );
 //! # }
 //! ```
 
@@ -109,6 +132,17 @@ impl State {
     /// Similar semantics to encryption.
     pub fn authenticated_decryption(&self, ciphertext: &[u8], message_number: u16) -> Option<Vec<u8>> {
         self.create_encryption_object(message_number).decrypt_and_authenticate(ciphertext)
+    }
+
+    /// Un-encrypted authentication for verifying public packet metadata such as the message number and length
+    pub fn plain_auth_tag(&self, message: &[u8], message_number: u16) -> [u8; hmacsha512256::TAGBYTES] {
+        self.create_encryption_object(message_number).plain_auth_tag(message)
+    }
+
+    /// for verifying tags created by plain_auth_tag
+    pub fn verify_auth_tag(&self, auth_tag: &[u8], message: &[u8], message_number: u16) -> bool {
+        // auth_tag is verified in ChaCha20HmacSha512256
+        self.create_encryption_object(message_number).verify_auth(auth_tag, message)
     }
  
     /// Destroy keys up to number n.
@@ -193,4 +227,19 @@ mod tests {
 
         assert_eq!(message, str::from_utf8(&plaintext).unwrap());
     }
+
+    #[test]
+    fn plain_auth_random() {
+        sodiumoxide::init();
+        let message = "hello world!".as_bytes();
+        let k_e = &randombytes::randombytes(32);
+        let k_a = &randombytes::randombytes(32);
+        let message_number = random_message_number();
+
+        let state = State::new(k_e, k_a);
+        let auth_tag = state.plain_auth_tag(message, message_number);
+
+        assert!( state.verify_auth_tag(&auth_tag, message, message_number) );
+    }
+
 }
