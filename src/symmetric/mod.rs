@@ -43,7 +43,7 @@
 //! # }
 //! ```
 //!
-//! # Example (Encrypted Authentication)
+//! # Example (Plain Authentication)
 //! ```
 //! # extern crate sodiumoxide;
 //! # extern crate proj_crypto;
