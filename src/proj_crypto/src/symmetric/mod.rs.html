@@ -206,6 +206,87 @@
 <span id="162">162</span>
 <span id="163">163</span>
 <span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Symmetric encryption module.</span>
 <span class='doccomment'>//! </span>
@@ -219,7 +300,7 @@
 <span class='doccomment'>//! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.</span>
 <span class='doccomment'>//! Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default (xsalsa20) because I will not be using a random nonse and chacha is more resistant to crypt analysis (see it&#39;s introductory paper). The key is used from the ratcheting system.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! # Example</span>
+<span class='doccomment'>//! # Example (Encrypted Authentication)</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//! # extern crate sodiumoxide;</span>
 <span class='doccomment'>//! # extern crate proj_crypto;</span>
@@ -249,6 +330,29 @@
 <span class='doccomment'>//! let plaintext8 = state.authenticated_decryption(&amp;ciphertext8, 8).unwrap();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! assert_eq!(message, str::from_utf8(&amp;plaintext8).unwrap());</span>
+<span class='doccomment'>//! # }</span>
+<span class='doccomment'>//! ```</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Example (Encrypted Authentication)</span>
+<span class='doccomment'>//! ```</span>
+<span class='doccomment'>//! # extern crate sodiumoxide;</span>
+<span class='doccomment'>//! # extern crate proj_crypto;</span>
+<span class='doccomment'>//! # use proj_crypto::symmetric::*;</span>
+<span class='doccomment'>//! use sodiumoxide::randombytes;</span>
+<span class='doccomment'>//! use std::str;</span>
+<span class='doccomment'>//! </span>
+<span class='doccomment'>//! # fn main() {</span>
+<span class='doccomment'>//! sodiumoxide::init();</span>
+<span class='doccomment'>//! let message = &quot;hello world!&quot;.as_bytes();</span>
+<span class='doccomment'>//! let k_e = &amp;randombytes::randombytes(32);</span>
+<span class='doccomment'>//! let k_a = &amp;randombytes::randombytes(32);</span>
+<span class='doccomment'>//! let message_number: u16 = 0;</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! let mut state = State::new(k_e, k_a);</span>
+<span class='doccomment'>//! let state = State::new(k_e, k_a);</span>
+<span class='doccomment'>//! let auth_tag = state.plain_auth_tag(message, message_number);</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! assert!( state.verify_auth_tag(&amp;auth_tag, message, message_number) );</span>
 <span class='doccomment'>//! # }</span>
 <span class='doccomment'>//! ```</span>
 
@@ -319,6 +423,17 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>authenticated_decryption</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>message_number</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>create_encryption_object</span>(<span class='ident'>message_number</span>).<span class='ident'>decrypt_and_authenticate</span>(<span class='ident'>ciphertext</span>)
     }
+
+    <span class='doccomment'>/// Un-encrypted authentication for verifying public packet metadata such as the message number and length</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>plain_auth_tag</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>message_number</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> [<span class='ident'>u8</span>; <span class='ident'>hmacsha512256</span>::<span class='ident'>TAGBYTES</span>] {
+        <span class='self'>self</span>.<span class='ident'>create_encryption_object</span>(<span class='ident'>message_number</span>).<span class='ident'>plain_auth_tag</span>(<span class='ident'>message</span>)
+    }
+
+    <span class='doccomment'>/// for verifying tags created by plain_auth_tag</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>verify_auth_tag</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>auth_tag</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>message_number</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='comment'>// auth_tag is verified in ChaCha20HmacSha512256</span>
+        <span class='self'>self</span>.<span class='ident'>create_encryption_object</span>(<span class='ident'>message_number</span>).<span class='ident'>verify_auth</span>(<span class='ident'>auth_tag</span>, <span class='ident'>message</span>)
+    }
  
     <span class='doccomment'>/// Destroy keys up to number n.</span>
     <span class='doccomment'>/// This is done so that future compromises cannot compromise messages under the older keys and as a performance optimisation to reduce the number of hashes required.</span>
@@ -356,12 +471,12 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>encrypt_decrypt</span>() {
+    <span class='kw'>fn</span> <span class='ident'>encrypt_decrypt_zero</span>() {
         <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
         <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
         <span class='kw'>let</span> <span class='ident'>k_e</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
         <span class='kw'>let</span> <span class='ident'>k_a</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
-        <span class='kw'>let</span> <span class='ident'>message_number</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='number'>2</span>;
+        <span class='kw'>let</span> <span class='ident'>message_number</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='number'>0</span>; <span class='comment'>// important to test the boundary</span>
 
 
         <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>State</span>::<span class='ident'>new</span>(<span class='ident'>k_e</span>, <span class='ident'>k_a</span>);
@@ -370,6 +485,53 @@
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>).<span class='ident'>unwrap</span>());
     }
+
+    <span class='kw'>fn</span> <span class='ident'>random_message_number</span>() <span class='op'>-&gt;</span> <span class='ident'>u16</span> {
+        <span class='kw'>let</span> <span class='ident'>message_number_bytes</span> <span class='op'>=</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>2</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>message_number</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='number'>0</span>;
+
+        <span class='comment'>// turn two bytes into a u16</span>
+        <span class='ident'>message_number</span> <span class='op'>|=</span> ((<span class='ident'>message_number_bytes</span>[<span class='number'>0</span>]) <span class='kw'>as</span> <span class='ident'>u16</span>) <span class='op'>&lt;&lt;</span> <span class='number'>8</span>;
+        <span class='ident'>message_number</span> <span class='op'>|=</span> (<span class='ident'>message_number_bytes</span>[<span class='number'>1</span>]) <span class='kw'>as</span> <span class='ident'>u16</span>;
+
+        <span class='comment'>// check the message number is valid</span>
+        <span class='kw'>if</span> <span class='ident'>message_number</span> <span class='op'>==</span> <span class='ident'>u16</span>::<span class='ident'>max_value</span>() {
+            <span class='ident'>random_message_number</span>() <span class='comment'>// generate a new one</span>
+        } <span class='kw'>else</span> {
+            <span class='ident'>message_number</span> <span class='comment'>// this one is good enough</span>
+        }
+    }
+
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>encrypt_decrypt_random</span>() { <span class='comment'>// this might look like it would be slower but my i5-3570k can do 2 971 550 SHA512 hashes of this size in one second (openssl speed). This is a lot more than u16::max_value()</span>
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
+        <span class='kw'>let</span> <span class='ident'>k_e</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='ident'>k_a</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='ident'>message_number</span> <span class='op'>=</span> <span class='ident'>random_message_number</span>();
+
+        <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>State</span>::<span class='ident'>new</span>(<span class='ident'>k_e</span>, <span class='ident'>k_a</span>);
+        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>authenticated_encryption</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>(), <span class='ident'>message_number</span>);
+        <span class='kw'>let</span> <span class='ident'>plaintext</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>authenticated_decryption</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>, <span class='ident'>message_number</span>).<span class='ident'>unwrap</span>();
+
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>).<span class='ident'>unwrap</span>());
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>plain_auth_random</span>() {
+        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>.<span class='ident'>as_bytes</span>();
+        <span class='kw'>let</span> <span class='ident'>k_e</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='ident'>k_a</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
+        <span class='kw'>let</span> <span class='ident'>message_number</span> <span class='op'>=</span> <span class='ident'>random_message_number</span>();
+
+        <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>State</span>::<span class='ident'>new</span>(<span class='ident'>k_e</span>, <span class='ident'>k_a</span>);
+        <span class='kw'>let</span> <span class='ident'>auth_tag</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>plain_auth_tag</span>(<span class='ident'>message</span>, <span class='ident'>message_number</span>);
+
+        <span class='macro'>assert</span><span class='macro'>!</span>( <span class='ident'>state</span>.<span class='ident'>verify_auth_tag</span>(<span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='ident'>message</span>, <span class='ident'>message_number</span>) );
+    }
+
 }
 </pre>
 </section>
