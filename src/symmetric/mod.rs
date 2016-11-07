@@ -179,20 +179,21 @@ mod tests {
     extern crate sodiumoxide;
     use std::str;
 
+    const MESSAGE_LENGTH: usize = 1024;
+
     #[test]
     fn encrypt_decrypt_zero() {
         sodiumoxide::init();
-        let message = "hello world!";
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
         let k_e = &randombytes::randombytes(32);
         let k_a = &randombytes::randombytes(32);
         let message_number: u16 = 0; // important to test the boundary
 
-
         let state = State::new(k_e, k_a);
-        let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);
+        let ciphertext = state.authenticated_encryption(message, message_number);
         let plaintext = state.authenticated_decryption(&ciphertext, message_number).unwrap();
 
-        assert_eq!(message, str::from_utf8(&plaintext).unwrap());
+        assert_eq!(message, &plaintext);
     }
 
     fn random_message_number() -> u16 {
@@ -211,26 +212,26 @@ mod tests {
         }
     }
 
-
+// this might look like it would be slower but my i5-3570k can do 2 971 550 SHA512 hashes of this size in one second (openssl speed). This is a lot more than u16::max_value()
     #[test]
-    fn encrypt_decrypt_random() { // this might look like it would be slower but my i5-3570k can do 2 971 550 SHA512 hashes of this size in one second (openssl speed). This is a lot more than u16::max_value()
+    fn encrypt_decrypt_random() {
         sodiumoxide::init();
-        let message = "hello world!";
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
         let k_e = &randombytes::randombytes(32);
         let k_a = &randombytes::randombytes(32);
         let message_number = random_message_number();
 
         let state = State::new(k_e, k_a);
-        let ciphertext = state.authenticated_encryption(message.as_bytes(), message_number);
+        let ciphertext = state.authenticated_encryption(message, message_number);
         let plaintext = state.authenticated_decryption(&ciphertext, message_number).unwrap();
 
-        assert_eq!(message, str::from_utf8(&plaintext).unwrap());
+        assert_eq!(message, &plaintext);
     }
 
     #[test]
     fn plain_auth_random() {
         sodiumoxide::init();
-        let message = "hello world!".as_bytes();
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
         let k_e = &randombytes::randombytes(32);
         let k_a = &randombytes::randombytes(32);
         let message_number = random_message_number();
@@ -240,5 +241,4 @@ mod tests {
 
         assert!( state.verify_auth_tag(&auth_tag, message, message_number) );
     }
-
 }

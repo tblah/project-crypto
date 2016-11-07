@@ -88,6 +88,9 @@ mod tests {
     use sodiumoxide::crypto::auth::hmacsha512256;
     use std::str;
     use sodiumoxide;
+    use sodiumoxide::randombytes;
+
+    const MESSAGE_LENGTH: usize = 1024;
 
     #[test]
     fn new() {
@@ -108,13 +111,13 @@ mod tests {
         let nonce = chacha20::gen_nonce();
         let dut = ChaCha20HmacSha512256::new(e_k.clone(), a_k.clone(), nonce.clone());
 
-        let message = "hello world!";
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
 
-        let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
+        let ciphertext = dut.authenticate_and_encrypt(message);
 
         let transmitted_message = dut.decrypt_and_authenticate(&ciphertext).unwrap();
 
-        assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
+        assert_eq!(message, &transmitted_message);
     }
 
     #[test]
@@ -127,13 +130,13 @@ mod tests {
         let dut = ChaCha20HmacSha512256::new(e_k.clone(), a_k.clone(), nonce.clone());
         let dut_corrupted = ChaCha20HmacSha512256::new(e_k.clone(), a_k2.clone(), nonce.clone());
 
-        let message = "hello world!";
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
 
-        let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
+        let ciphertext = dut.authenticate_and_encrypt(message);
 
         let transmitted_message = dut_corrupted.decrypt_and_authenticate(&ciphertext).unwrap();
 
-        assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
+        assert_eq!(message, &transmitted_message);
     }
 
     #[test]
@@ -146,13 +149,13 @@ mod tests {
         let dut = ChaCha20HmacSha512256::new(e_k.clone(), a_k.clone(), nonce.clone());
         let dut_corrupted = ChaCha20HmacSha512256::new(e_k2.clone(), a_k.clone(), nonce.clone());
 
-        let message = "hello world!";
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
 
-        let ciphertext = dut.authenticate_and_encrypt(message.as_bytes());
+        let ciphertext = dut.authenticate_and_encrypt(message);
 
         let transmitted_message = dut_corrupted.decrypt_and_authenticate(&ciphertext).unwrap();
 
-        assert_eq!(message, str::from_utf8(&transmitted_message).unwrap());
+        assert_eq!(message, &transmitted_message);
     }
 
     #[test]
@@ -179,7 +182,7 @@ mod tests {
         let nonce = chacha20::gen_nonce();
         let dut = ChaCha20HmacSha512256::new(e_k, a_k, nonce);
 
-        let message = "hello world!".as_bytes();
+        let message = &randombytes::randombytes(MESSAGE_LENGTH);
 
         let auth_tag = dut.plain_auth_tag(message);
 
