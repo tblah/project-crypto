@@ -233,12 +233,6 @@
 <span id="189">189</span>
 <span id="190">190</span>
 <span id="191">191</span>
-<span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
-<span id="197">197</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! This module provides an implementation of AuthenticatedEncryptorDecryptor.</span>
 <span class='doccomment'>//! </span>
@@ -260,15 +254,6 @@
 
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>stream</span>::<span class='ident'>chacha20</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
-
-<span class='doccomment'>/// Trait representing something that does symmetric authenticated encryption.</span>
-<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>AuthenticatedEncryptorDecryptor</span> {
-    <span class='doccomment'>/// Authenticates the message and then encrypts the message and the authentication token. The result is returned as a vector.</span>
-    <span class='kw'>fn</span> <span class='ident'>authenticate_and_encrypt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>;
-
-    <span class='doccomment'>/// Decrypts the cipher text and then attempts to authenticate it. </span>
-    <span class='kw'>fn</span> <span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span>;
-}
 
 <span class='doccomment'>/// Struct for storing the state of the symmetric encryption and authentication system.</span>
 <span class='doccomment'>/// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it&#39;s types go out of scope.</span>
@@ -302,10 +287,9 @@
 
         <span class='ident'>hmacsha512256</span>::<span class='ident'>verify</span>(<span class='kw-2'>&amp;</span><span class='ident'>hmacsha512256</span>::<span class='ident'>Tag</span>::<span class='ident'>from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>).<span class='ident'>unwrap</span>(), <span class='ident'>message</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>authentication_key</span>)
     }
-}
 
-<span class='kw'>impl</span> <span class='ident'>AuthenticatedEncryptorDecryptor</span> <span class='kw'>for</span> <span class='ident'>ChaCha20HmacSha512256</span> {
-    <span class='kw'>fn</span> <span class='ident'>authenticate_and_encrypt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// authenticates and encrypts the message argument. Ciphertext is returned as a vector of bytes</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>authenticate_and_encrypt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>message</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>auth_slice</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>plain_auth_tag</span>(<span class='ident'>message</span>);
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cleartext</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
@@ -315,7 +299,8 @@
         <span class='ident'>chacha20</span>::<span class='ident'>stream_xor</span>(<span class='kw-2'>&amp;</span><span class='ident'>cleartext</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>nonce</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>encryption_key</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
+    <span class='doccomment'>/// Decrypts and attempts to authenticate the message. If authentication is successful this returns Some(plaintext), otherwise None.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ciphertext</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ciphertext</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='ident'>hmacsha512256</span>::<span class='ident'>TAGBYTES</span>);
 
         <span class='kw'>let</span> <span class='ident'>plaintext</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>stream_xor</span>(<span class='ident'>ciphertext</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>nonce</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>encryption_key</span>);
@@ -339,6 +324,9 @@
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
+    <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>randombytes</span>;
+
+    <span class='kw'>const</span> <span class='ident'>MESSAGE_LENGTH</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1024</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>new</span>() {
@@ -359,13 +347,13 @@
         <span class='kw'>let</span> <span class='ident'>nonce</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>gen_nonce</span>();
         <span class='kw'>let</span> <span class='ident'>dut</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>.<span class='ident'>clone</span>(), <span class='ident'>a_k</span>.<span class='ident'>clone</span>(), <span class='ident'>nonce</span>.<span class='ident'>clone</span>());
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='ident'>MESSAGE_LENGTH</span>);
 
-        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>());
+        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>);
 
         <span class='kw'>let</span> <span class='ident'>transmitted_message</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>).<span class='ident'>unwrap</span>();
 
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>).<span class='ident'>unwrap</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -378,13 +366,13 @@
         <span class='kw'>let</span> <span class='ident'>dut</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>.<span class='ident'>clone</span>(), <span class='ident'>a_k</span>.<span class='ident'>clone</span>(), <span class='ident'>nonce</span>.<span class='ident'>clone</span>());
         <span class='kw'>let</span> <span class='ident'>dut_corrupted</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>.<span class='ident'>clone</span>(), <span class='ident'>a_k2</span>.<span class='ident'>clone</span>(), <span class='ident'>nonce</span>.<span class='ident'>clone</span>());
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='ident'>MESSAGE_LENGTH</span>);
 
-        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>());
+        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>);
 
         <span class='kw'>let</span> <span class='ident'>transmitted_message</span> <span class='op'>=</span> <span class='ident'>dut_corrupted</span>.<span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>).<span class='ident'>unwrap</span>();
 
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>).<span class='ident'>unwrap</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -397,13 +385,13 @@
         <span class='kw'>let</span> <span class='ident'>dut</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>.<span class='ident'>clone</span>(), <span class='ident'>a_k</span>.<span class='ident'>clone</span>(), <span class='ident'>nonce</span>.<span class='ident'>clone</span>());
         <span class='kw'>let</span> <span class='ident'>dut_corrupted</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k2</span>.<span class='ident'>clone</span>(), <span class='ident'>a_k</span>.<span class='ident'>clone</span>(), <span class='ident'>nonce</span>.<span class='ident'>clone</span>());
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>;
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='ident'>MESSAGE_LENGTH</span>);
 
-        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>.<span class='ident'>as_bytes</span>());
+        <span class='kw'>let</span> <span class='ident'>ciphertext</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>authenticate_and_encrypt</span>(<span class='ident'>message</span>);
 
         <span class='kw'>let</span> <span class='ident'>transmitted_message</span> <span class='op'>=</span> <span class='ident'>dut_corrupted</span>.<span class='ident'>decrypt_and_authenticate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>).<span class='ident'>unwrap</span>();
 
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>).<span class='ident'>unwrap</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>message</span>, <span class='kw-2'>&amp;</span><span class='ident'>transmitted_message</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -430,7 +418,7 @@
         <span class='kw'>let</span> <span class='ident'>nonce</span> <span class='op'>=</span> <span class='ident'>chacha20</span>::<span class='ident'>gen_nonce</span>();
         <span class='kw'>let</span> <span class='ident'>dut</span> <span class='op'>=</span> <span class='ident'>ChaCha20HmacSha512256</span>::<span class='ident'>new</span>(<span class='ident'>e_k</span>, <span class='ident'>a_k</span>, <span class='ident'>nonce</span>);
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;hello world!&quot;</span>.<span class='ident'>as_bytes</span>();
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='ident'>MESSAGE_LENGTH</span>);
 
         <span class='kw'>let</span> <span class='ident'>auth_tag</span> <span class='op'>=</span> <span class='ident'>dut</span>.<span class='ident'>plain_auth_tag</span>(<span class='ident'>message</span>);
 
