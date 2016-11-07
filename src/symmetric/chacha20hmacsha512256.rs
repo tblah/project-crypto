@@ -19,15 +19,6 @@
 use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 
-/// Trait representing something that does symmetric authenticated encryption.
-pub trait AuthenticatedEncryptorDecryptor {
-    /// Authenticates the message and then encrypts the message and the authentication token. The result is returned as a vector.
-    fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8>;
-
-    /// Decrypts the cipher text and then attempts to authenticate it. 
-    fn decrypt_and_authenticate(&self, ciphertext: &[u8]) -> Option<Vec<u8>>;
-}
-
 /// Struct for storing the state of the symmetric encryption and authentication system.
 /// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it's types go out of scope.
 pub struct ChaCha20HmacSha512256 {
@@ -60,10 +51,9 @@ impl ChaCha20HmacSha512256 {
 
         hmacsha512256::verify(&hmacsha512256::Tag::from_slice(&auth_tag).unwrap(), message, &self.authentication_key)
     }
-}
 
-impl AuthenticatedEncryptorDecryptor for ChaCha20HmacSha512256 {
-    fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8> {
+    /// authenticates and encrypts the message argument. Ciphertext is returned as a vector of bytes
+    pub fn authenticate_and_encrypt(&self, message: &[u8]) -> Vec<u8> {
         let auth_slice = self.plain_auth_tag(message);
 
         let mut cleartext = vec![];
@@ -73,7 +63,8 @@ impl AuthenticatedEncryptorDecryptor for ChaCha20HmacSha512256 {
         chacha20::stream_xor(&cleartext, &self.nonce, &self.encryption_key)
     }
 
-    fn decrypt_and_authenticate(&self, ciphertext: &[u8]) -> Option<Vec<u8>> {
+    /// Decrypts and attempts to authenticate the message. If authentication is successful this returns Some(plaintext), otherwise None.
+    pub fn decrypt_and_authenticate(&self, ciphertext: &[u8]) -> Option<Vec<u8>> {
         assert!(ciphertext.len() > hmacsha512256::TAGBYTES);
 
         let plaintext = chacha20::stream_xor(ciphertext, &self.nonce, &self.encryption_key);

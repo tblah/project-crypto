@@ -83,7 +83,6 @@ mod ratchet;
 
 use self::ratchet::KeyIteration;
 use self::chacha20hmacsha512256::ChaCha20HmacSha512256;
-use self::chacha20hmacsha512256::AuthenticatedEncryptorDecryptor;
 use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
