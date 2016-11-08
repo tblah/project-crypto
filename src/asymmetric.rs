@@ -1,7 +1,28 @@
 //! Asymmetric Encryption Module. 
 //! 
-//! This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal as explained here https://whispersystems.org/blog/advanced-ratcheting/.
-//! 
+//! This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal, explained here https://whispersystems.org/blog/advanced-ratcheting/.
+//!
+//! Basically the encryption shared secret is derived from ephemeral key pairs and authentication keys are the sender's long-term key pair exchanged with the receiver's ephemeral key pair. This is faster than signing and I think it is rather elegant too.
+//!
+//! # The Protocol
+//! ## Device Message 0
+//! +generate ephemeral keypair
+//! +compute authentication key for receiving from the server
+//! +send ephemeral key to the server
+//!
+//! ## Server Message 0
+//! +Generate ephemeral keypair
+//! +Compute all session keys
+//! +Pick a random challenge number
+//! +Send ephemeral public key and r to the client, plaintext authentication (as the client does not yet have the encryption key)
+//!
+//! ## Device Message 1
+//! +Check auth
+//! +Compute remaining session keys
+//! Send r to server, encrypted and authenticated. This authenticates the ephemeral public key we sent in message 0
+//!
+//! ## Server
+//! +Decrypt and authenticate and check the challenge response
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -119,8 +140,8 @@ impl LongTermKeys {
     }
 
     /// the first message from the server. This comes after receiving the first message from the device.
-    /// Returns the ephemeral public key, the random challenge, the session keys and the ciphertext to send to the device
-    pub fn server_first(&self, device_ephemeral_public: &PublicKey, message_number: u16) -> (PublicKey, Vec<u8>, SessionKeys, Vec<u8>) {
+    /// Returns the ephemeral public key, the random challenge, the session keys and the authentication tag to send to the device, the plaintext to send to the device
+    pub fn server_first(&self, device_ephemeral_public: &PublicKey, message_number: u16) -> (PublicKey, Vec<u8>, SessionKeys, [u8; symmetric::AUTH_TAG_BYTES], Vec<u8>) {
         // generate ephemeral keypair
         let (pub_key, sec_key) = gen_keypair(); // sec_key implements drop() to clear memory
         
@@ -141,14 +162,15 @@ impl LongTermKeys {
         let mut plaintext = vec![];
         plaintext.extend_from_slice(pub_key_bytes);
         plaintext.extend_from_slice(&random_challenge);
-        let ciphertext = session_keys.from_server.authenticated_encryption(&plaintext, message_number);
+        let auth_tag = session_keys.from_server.plain_auth_tag(&plaintext, message_number);
     
         // clean things up
         memzero(&mut encryption_key_shared);
 
         // return stuff
-        (pub_key, random_challenge, session_keys, ciphertext)
+        (pub_key, random_challenge, session_keys, auth_tag, plaintext)
     } // session secret key destroyed when it goes out of scope here
+
 }
          
 /******************* Tests *******************/
@@ -196,7 +218,7 @@ mod tests {
         };
 
         let (d_pk_session, d_sk_session, auth_from_server) = device.device_first();
-        let (s_pk_session, challenge, session_keys, ciphertext) = server.server_first(&d_pk_session, 0);
+        let (s_pk_session, challenge, session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
 
         // we can't access the auth_from_server key calculated by the server directly so try authenticating with both of them
         let message = &randombytes::randombytes(32);

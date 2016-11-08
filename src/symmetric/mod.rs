@@ -88,6 +88,9 @@ use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
 use std::mem;
 
+/// Length of an authentication tag, so that users don't have to use ...::auth::hmacsha512256
+pub const AUTH_TAG_BYTES: usize = hmacsha512256::TAGBYTES;
+
 /// Stores the state of the symmetric encryption system.
 /// Memory is zeroed when this goes out of scope
 pub struct State {
