@@ -179,12 +179,12 @@ mod tests {
     use super::*;
     use super::super::symmetric;
     extern crate sodiumoxide;
-    use sodiumoxide::crypto::sign::ed25519;
     use sodiumoxide::randombytes;
-    use sodiumoxide::crypto::scalarmult::curve25519;
 
    #[test]
     fn key_exchange_test() {
+        sodiumoxide::init();
+        
         let (pk1, sk1) = gen_keypair();
         let (pk2, sk2) = gen_keypair();
 
