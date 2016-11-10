@@ -286,6 +286,9 @@
 <span id="242">242</span>
 <span id="243">243</span>
 <span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Symmetric encryption module.</span>
 <span class='doccomment'>//! </span>
@@ -376,6 +379,9 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>sha256</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
+
+<span class='doccomment'>/// Length of an authentication tag, so that users don&#39;t have to use ...::auth::hmacsha512256</span>
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AUTH_TAG_BYTES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='ident'>hmacsha512256</span>::<span class='ident'>TAGBYTES</span>;
 
 <span class='doccomment'>/// Stores the state of the symmetric encryption system.</span>
 <span class='doccomment'>/// Memory is zeroed when this goes out of scope</span>

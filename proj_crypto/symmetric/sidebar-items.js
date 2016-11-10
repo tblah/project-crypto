@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["State","Stores the state of the symmetric encryption system. Memory is zeroed when this goes out of scope"]]});
+initSidebarItems({"constant":[["AUTH_TAG_BYTES","Length of an authentication tag, so that users don't have to use ...::auth::hmacsha512256"]],"struct":[["State","Stores the state of the symmetric encryption system. Memory is zeroed when this goes out of scope"]]});
