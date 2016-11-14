@@ -87,6 +87,41 @@ use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
 use std::mem;
+use sodiumoxide::utils::memzero;
+
+/// A wrapper around sha256::Digest so that we can implement Drop on it to clean up the memory when it goes out of scope.
+/// This is necessary because often our shared secret keys are sha256 digests.
+#[derive(Debug)]
+#[derive(PartialEq, Eq)] // equal when all fields are equal. sha256::Digest implements equality in constant time.
+pub struct Digest { // used in ratchet and asymmetric
+    /// The encapsulated sha256::Digest
+    pub digest: sha256::Digest,
+}
+
+/// Used in hash_n_times. Unfortunately we can't derive Clone on types with destructors.
+impl Clone for Digest {
+    fn clone(&self) -> Digest {
+        Digest { digest: self.digest.clone() }
+    }
+}
+
+impl Drop for Digest {
+    /// We are using sha256 digests as keys so we need to be careful with them.
+    /// This function zeroes out the memory when it goes out of scope
+    fn drop(&mut self) {
+        let &mut sha256::Digest(ref mut digest_value) = &mut self.digest;
+        memzero(digest_value);
+    }
+}
+
+impl Digest {
+    /// returns the actual data of the digest (from inside the sha256::Digest)
+    pub fn as_slice(&self) -> [u8; sha256::DIGESTBYTES] {
+        let &sha256::Digest(return_val) = &self.digest;
+
+        return_val
+    }
+}
 
 /// Length of an authentication tag, so that users don't have to use ...::auth::hmacsha512256
 pub const AUTH_TAG_BYTES: usize = hmacsha512256::TAGBYTES;
@@ -113,15 +148,10 @@ impl State {
         let e_k = chacha20::Key::from_slice( &self.encryption_key.nth_key(message_number) ).unwrap();
         let a_k = hmacsha512256::Key::from_slice( &self.authentication_key.nth_key(message_number) ).unwrap();
 
-        let ret: ChaCha20HmacSha512256;
+        let nonce = chacha20::Nonce::from_slice( &hash_message_number(message_number) ).unwrap();
 
-        unsafe { // unsafe because of the call to hash_message_number
-            let nonce = chacha20::Nonce::from_slice( &hash_message_number(message_number) ).unwrap();
-            ret = ChaCha20HmacSha512256::new(e_k, a_k, nonce);
-        }
-
-        ret
-    }
+        ChaCha20HmacSha512256::new(e_k, a_k, nonce)
+    } // e_k and a_k implement drop so they will clean themselves up. The message number (nonce) is sent in the clear anyway.
 
     /// Perform authenticated encryption.
     /// The message number is used to select the correct encryption key and as a nonce.
@@ -158,10 +188,12 @@ impl State {
 }
 
 /// hashes the message number to make the nonce (remove all the structure)
-/// unsafe to allow the transmute operation from u16 to [u8] so that the message number can be hashed
-unsafe fn hash_message_number(num: u16) -> [u8; chacha20::NONCEBYTES] {
-    let n = mem::transmute::<u16, [u8; 2]>(num);
-    let digest = sha256::hash(&n);
+fn hash_message_number(num: u16) -> [u8; chacha20::NONCEBYTES] {
+    let digest;
+    unsafe {  // unsafe for transmute
+        let n = mem::transmute::<u16, [u8; 2]>(num);
+        digest = sha256::hash(&n);
+    }
     let sha256::Digest(digest_data) = digest;
 
     // done in a clumsy-looking way so that this doesn't end up being a slice

@@ -2,6 +2,10 @@
 //! 
 //! This library contains the cryptography used in my third year project at university.
 //! **Please do not use this for anything important. This cryptography has not been reviewed.**
+//!
+//! See the code example in the asymmetric module for a brief overview of what this library can do.
+//!
+//! This project is licenced under the terms of the GNU General Public Licence as published by the Free Software Foundation, either version 3 of the licence, or (at your option) any later version.
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify

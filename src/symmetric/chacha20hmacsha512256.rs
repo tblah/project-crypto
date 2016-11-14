@@ -1,4 +1,4 @@
-//! This module provides an implementation of AuthenticatedEncryptorDecryptor.
+//! This module provides an implementation of authenticated encryption and plain authentication for a given key. This should be used through the interface in super::
 //! 
 //! # Cryptography
 //! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.
@@ -28,7 +28,8 @@ pub struct ChaCha20HmacSha512256 {
 }
 
 impl ChaCha20HmacSha512256 {
-    /// Constructor for ChaCha20HmacSha512256.
+    /// Constructor for ChaCha20HmacSha512256. This function is annotated to always be inlined so the arguments should not ever be copied around memory.
+    #[inline(always)]
     pub fn new(encryption_key: chacha20::Key, authentication_key: hmacsha512256::Key, nonce: chacha20::Nonce) -> ChaCha20HmacSha512256 {
         ChaCha20HmacSha512256 {
             encryption_key: encryption_key,

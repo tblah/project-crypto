@@ -4,6 +4,8 @@
 //!
 //! Basically the encryption shared secret is derived from ephemeral key pairs and authentication keys are the sender's long-term key pair exchanged with the receiver's ephemeral key pair. This is faster than signing and I think it is rather elegant too.
 //!
+//! Key exchange is implemented as suggested here https://download.libsodium.org/doc/advanced/scalar_multiplication.html
+//!
 //! # The Protocol
 //! ## Device Message 0
 //! + generate ephemeral keypair
@@ -25,7 +27,7 @@
 //! + Decrypt and authenticate and check the challenge response
 //!
 //! ## An important note:
-//! Authentication session keys are symmetric therefore either party can impersonate the other. In an interactive setting this is not a problem because the keys are fixed to only this pair and the other side would not be expecting to receive a message authenticated using their key. However, if Bob decided to publish all his key material he could fabricate messages which look as though they are sent by Alice. This was intentional in the design of Signal's key exchange because it gives both parties plausible deniability.
+//! Authentication session keys are symmetric therefore either party can impersonate the other. In an interactive setting this is not a problem because the keys are fixed to only this pair and the other side would not be expecting to receive a message authenticated using their key. However, if Bob decided to publish all his key material he could fabricate messages which look to a third party as though they are sent by Alice. This was intentional in the design of Signal's key exchange because it gives both parties plausible deniability.
 //!
 //! # Example 
 //! ```
@@ -63,7 +65,7 @@
 //! let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
 //!
 //! // Challenge response from the device
-//! let (device_session_keys, ciphertext) = device.device_second(&plaintext, auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
+//! let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
 //!
 //! // server verifying the client's challenge response
 //! assert!(server_verify_response(&server_session_keys, &ciphertext, 1, &challenge));
@@ -94,32 +96,33 @@
     along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
 use super::symmetric;
+use super::symmetric::Digest;
 use sodiumoxide::crypto::scalarmult::curve25519;
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::utils::memzero;
 use sodiumoxide::randombytes;
 use sodiumoxide::utils::memcmp;
-//use std::mem;
 
-/// Public Key - just an alias. Implements drop() so the memory will be wiped when this goes out of scope
+/// Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
 pub type PublicKey = curve25519::GroupElement; 
 /// The number of bytes in a PublicKey
 pub const PUBLIC_KEY_BYTES: usize = curve25519::GROUPELEMENTBYTES;
 
-/// Secret Key - just an alias. Implements drop() so the memory will be wiped when this goes out of scope
+/// Secret Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
 pub type SecretKey = curve25519::Scalar;
 /// The number of bytes in a SecretKey
 pub const SECRET_KEY_BYTES: usize = curve25519::SCALARBYTES;
 
 /// Generate an asymmetric key pair.
-/// TODO: this may not clear memory properly
 pub fn gen_keypair() -> (PublicKey, SecretKey) {
-    let sk_bytes = &randombytes::randombytes(curve25519::SCALARBYTES);
+    let mut sk_bytes = randombytes::randombytes(curve25519::SCALARBYTES);
     
-    let sk = curve25519::Scalar::from_slice(sk_bytes).unwrap();
+    let sk = curve25519::Scalar::from_slice(&sk_bytes).unwrap();
     let pk = curve25519::scalarmult_base(&sk);
 
-    (pk, sk)
+    memzero(sk_bytes.as_mut_slice());
+
+    (pk, sk) // both implement drop() to clear the memory so don't worry about them being copied
 }
 
 /// Stores long term keys (e.g. from a certificate authority)
@@ -151,8 +154,8 @@ const SERVER_ENC_KEY_CONSTANT: &'static [u8] = b"server";
 
 /// private function to perform key exchange.
 /// The second public key is for key derivation from the X-co-ordinate, which alone does not possess enough entropy.
-/// see https://download.libsodium.org/doc/advanced/scalar_multiplication.html
-fn key_exchange(pub_key: &PublicKey, sec_key: &SecretKey, other_pub_key: &PublicKey, is_client: bool) -> [u8; SHARED_SECRET_LENGTH] {
+/// See https://download.libsodium.org/doc/advanced/scalar_multiplication.html
+fn key_exchange(pub_key: &PublicKey, sec_key: &SecretKey, other_pub_key: &PublicKey, is_client: bool) -> Digest {
     // scalar multiplication along curve25519. Gives an X co-ordinate of a point along the curve. 
     let point_on_curve = curve25519::scalarmult(sec_key, pub_key);
     let curve25519::GroupElement(ref point_on_curve_bytes) = point_on_curve;
@@ -173,32 +176,26 @@ fn key_exchange(pub_key: &PublicKey, sec_key: &SecretKey, other_pub_key: &Public
     }
 
     // finally work out the shared secret
-    let sha256::Digest(shared_secret) = sha256::hash(&thing_to_hash);
+    let shared_secret = Digest{ digest: sha256::hash(&thing_to_hash) };
 
-    // clean up memory. unsafe to ignore mutability check
+    // clean up memory 
     // point_on_curve is destroyed when it goes out of scope as it implements it in GroupElement::drop()
     memzero(&mut thing_to_hash);
 
-    shared_secret // returned by value so this memory is never cleaned up!!! TODO!
+    shared_secret // Digest implements drop() to clear the memory so don't worry about copying
 }
 
-fn hash_two_things(thing1: &[u8], thing2: &[u8]) -> [u8; SHARED_SECRET_LENGTH] {
+fn hash_two_things(thing1: &[u8], thing2: &[u8]) -> Digest {
     let mut thing_to_hash = vec![];
     thing_to_hash.extend_from_slice(thing1);
     thing_to_hash.extend_from_slice(thing2);
 
-    let sha256::Digest(result) = sha256::hash(&thing_to_hash);
+    let result = Digest{ digest: sha256::hash(&thing_to_hash) };
 
     memzero(&mut thing_to_hash);
 
-    result // returned by value so this memory is never cleaned up!! TODO!
+    result // Digest implements drop() to clear the memory so don't worry about copying
 }
-
-/*fn two_bytes_from_u16(x: u16) -> [u8; 2] {
-    unsafe { // for transmute
-        mem::transmute::<u16, [u8; 2]>(x);
-    }
-}*/
 
 impl LongTermKeys {
     /// The first message from the device. This initiates the exchange.
@@ -211,7 +208,7 @@ impl LongTermKeys {
         // key exchange between the server's public key and the ephemeral private key
         let auth_from_server = key_exchange(&self.their_public_key, &sec_key, &pub_key, true);
 
-        (pub_key, sec_key, auth_from_server)
+        (pub_key, sec_key, auth_from_server.as_slice())
     }
 
     /// the first message from the server. This comes after receiving the first message from the device.
@@ -224,13 +221,13 @@ impl LongTermKeys {
         let random_challenge = randombytes::randombytes(CHALLENGE_BYTES);
         
         // we need different encryption keys in each direction because the message number is used as a nonce and both sides maintain separate message number counts
-        let mut encryption_key_shared = key_exchange(device_ephemeral_public, &sec_key, &pub_key, false);
+        let sha256::Digest(mut encryption_key_shared) = key_exchange(device_ephemeral_public, &sec_key, &pub_key, false).digest; // we can't use Digest::as_slice() here because we want mutability
         let device_enc_key = hash_two_things(&encryption_key_shared, DEVICE_ENC_KEY_CONSTANT);
         let server_enc_key = hash_two_things(&encryption_key_shared, SERVER_ENC_KEY_CONSTANT);
 
         let session_keys = SessionKeys {
-            from_device: symmetric::State::new(&device_enc_key, &key_exchange(&self.their_public_key, &sec_key, &pub_key, false)),
-            from_server: symmetric::State::new(&server_enc_key, &key_exchange(device_ephemeral_public, &self.my_secret_key, &self.my_public_key, false)), // TODO: is this the right other_pub_key?
+            from_device: symmetric::State::new(&device_enc_key.as_slice(), &key_exchange(&self.their_public_key, &sec_key, &pub_key, false).as_slice()),
+            from_server: symmetric::State::new(&server_enc_key.as_slice(), &key_exchange(device_ephemeral_public, &self.my_secret_key, &self.my_public_key, false).as_slice()), 
         };
 
         // ciphertext to send to the device
@@ -242,20 +239,22 @@ impl LongTermKeys {
     
         // clean things up
         memzero(&mut encryption_key_shared);
+        // *_enc_key are Digests so they will destroy themselves.
+        // session_keys implements drop() so we don't need to worry about that either
 
         // return stuff
         (random_challenge, session_keys, auth_tag, plaintext)
-    } // ephemeral keys destroyed here
+    } // ephemeral keys destroyed here :-)
     
     /// The second message sent by the device. As far as the device is concerned, the setup is complete after sending this.
     ///
     /// Returns None if the server's message is invalid and Some((session keys, ciphertext to send to the server)) if everything checks out
-    pub fn device_second(&self, server_message: &Vec<u8>, auth_tag: [u8; symmetric::AUTH_TAG_BYTES], ephemeral_pk: &PublicKey, ephemeral_sk: &SecretKey, from_server_auth: &[u8; SHARED_SECRET_LENGTH], server_message_n: u16, my_message_n: u16)
+    pub fn device_second(&self, server_message: &Vec<u8>, auth_tag: &[u8; symmetric::AUTH_TAG_BYTES], ephemeral_pk: &PublicKey, ephemeral_sk: &SecretKey, from_server_auth: &[u8; SHARED_SECRET_LENGTH], server_message_n: u16, my_message_n: u16)
                          -> Option<(SessionKeys, Vec<u8>)> {
         // test the auth on the server's message
-        let server_authenticator = symmetric::State::new(from_server_auth, from_server_auth); // just set the encryption key that we don't have as the same as the 
-        if !server_authenticator.verify_auth_tag(&auth_tag, server_message, server_message_n) {
-            return None;
+        let server_authenticator = symmetric::State::new(from_server_auth, from_server_auth); // just set the encryption key that we don't have (and won't use) as the same  
+        if !server_authenticator.verify_auth_tag(auth_tag, server_message, server_message_n) {
+            return None; // symmetric::State implements drop so don't worry about leaking here
         };
 
         // check message length and then split it into what we want
@@ -264,25 +263,21 @@ impl LongTermKeys {
         let server_ephemeral_pk = curve25519::GroupElement::from_slice(server_ephemeral_pk_bytes).unwrap();
 
         // different encryption keys for each direction
-        let mut encryption_key_shared = key_exchange(&server_ephemeral_pk, ephemeral_sk, ephemeral_pk, true);
-        let device_enc_key = hash_two_things(&encryption_key_shared, DEVICE_ENC_KEY_CONSTANT);
-        let server_enc_key = hash_two_things(&encryption_key_shared, SERVER_ENC_KEY_CONSTANT);
+        let encryption_key_shared = key_exchange(&server_ephemeral_pk, ephemeral_sk, ephemeral_pk, true);
+        let device_enc_key = hash_two_things(&encryption_key_shared.as_slice(), DEVICE_ENC_KEY_CONSTANT);
+        let server_enc_key = hash_two_things(&encryption_key_shared.as_slice(), SERVER_ENC_KEY_CONSTANT);
 
         // calculate package the session keys (and calculate my authentication key)
         let session_keys = SessionKeys {
-            from_device: symmetric::State::new(&device_enc_key, &key_exchange(&server_ephemeral_pk, &self.my_secret_key, &self.my_public_key, true)),
-            from_server: symmetric::State::new(&server_enc_key, from_server_auth),
+            from_device: symmetric::State::new(&device_enc_key.as_slice(), &key_exchange(&server_ephemeral_pk, &self.my_secret_key, &self.my_public_key, true).as_slice()),
+            from_server: symmetric::State::new(&server_enc_key.as_slice(), from_server_auth),
         };
 
         // encrypt and authenticate the random challenge for sending to the server
         let ciphertext = session_keys.from_device.authenticated_encryption(random_challenge, my_message_n);
         
-        // clean memory up
-        memzero(&mut encryption_key_shared);
-
         Some((session_keys, ciphertext))
-    }
-
+    } // encryption_key_shared, session_keys and *_enc_key destroy it's self when it is drop()'ed
 }
  
 /// For the server to verify the challenge response from the client. 
@@ -378,7 +373,7 @@ mod tests {
 
         let (d_pk_session, d_sk_session, auth_from_server) = device.device_first();
         let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
-        let (device_session_keys, ciphertext) = device.device_second(&plaintext, auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
+        let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
 
         // we cannot access the keys directly so let's just check that we can read messages sent by each-other
         let message = randombytes::randombytes(MSG_LEN);
@@ -425,7 +420,7 @@ mod tests {
         let (d_pk_session, d_sk_session, auth_from_server) = device.device_first();
         let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
 
-        let result = device.device_second(&plaintext, auth_tag, &d_pk_session, &d_sk_session, &false_auth_key, 0, 1);
+        let result = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, &false_auth_key, 0, 1);
 
         // authentication should have failed
         assert!(result.is_none());
@@ -456,7 +451,7 @@ mod tests {
 
         let (d_pk_session, d_sk_session, auth_from_server) = device.device_first();
         let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
-        let (device_session_keys, ciphertext) = device.device_second(&plaintext, auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
+        let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, &auth_from_server, 0, 1).unwrap();
 
         // server verifying the client's challenge response
         assert!(server_verify_response(&server_session_keys, &ciphertext, 1, &challenge));
