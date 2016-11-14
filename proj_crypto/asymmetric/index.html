@@ -47,12 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-140' class='srclink' href='../../src/proj_crypto/src/asymmetric.rs.html#1-476' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-163' class='srclink' href='../../src/proj_crypto/src/asymmetric.rs.html#1-471' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Asymmetric Encryption Module.</p>
 
 <p>This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal, explained here <a href="https://whispersystems.org/blog/advanced-ratcheting/">https://whispersystems.org/blog/advanced-ratcheting/</a>.</p>
 
 <p>Basically the encryption shared secret is derived from ephemeral key pairs and authentication keys are the sender&#39;s long-term key pair exchanged with the receiver&#39;s ephemeral key pair. This is faster than signing and I think it is rather elegant too.</p>
+
+<p>Key exchange is implemented as suggested here <a href="https://download.libsodium.org/doc/advanced/scalar_multiplication.html">https://download.libsodium.org/doc/advanced/scalar_multiplication.html</a></p>
 
 <h1 id='the-protocol' class='section-header'><a href='#the-protocol'>The Protocol</a></h1>
 <h2 id='device-message-0' class='section-header'><a href='#device-message-0'>Device Message 0</a></h2>
@@ -83,7 +85,7 @@
 </ul>
 
 <h2 id='an-important-note' class='section-header'><a href='#an-important-note'>An important note:</a></h2>
-<p>Authentication session keys are symmetric therefore either party can impersonate the other. In an interactive setting this is not a problem because the keys are fixed to only this pair and the other side would not be expecting to receive a message authenticated using their key. However, if Bob decided to publish all his key material he could fabricate messages which look as though they are sent by Alice. This was intentional in the design of Signal&#39;s key exchange because it gives both parties plausible deniability.</p>
+<p>Authentication session keys are symmetric therefore either party can impersonate the other. In an interactive setting this is not a problem because the keys are fixed to only this pair and the other side would not be expecting to receive a message authenticated using their key. However, if Bob decided to publish all his key material he could fabricate messages which look to a third party as though they are sent by Alice. This was intentional in the design of Signal&#39;s key exchange because it gives both parties plausible deniability.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
 <pre class='rust rust-example-rendered'>
@@ -117,7 +119,7 @@
 <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
 
 <span class='comment'>// Challenge response from the device</span>
-<span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
 
 <span class='comment'>// server verifying the client&#39;s challenge response</span>
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>server_verify_response</span>(<span class='kw-2'>&amp;</span><span class='ident'>server_session_keys</span>, <span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>, <span class='number'>1</span>, <span class='kw-2'>&amp;</span><span class='ident'>challenge</span>));
@@ -176,8 +178,7 @@ The secret key is safely erased from memory when this goes out of scope</p>
                            <td><a class='fn' href='fn.gen_keypair.html'
                                   title='proj_crypto::asymmetric::gen_keypair'>gen_keypair</a></td>
                            <td class='docblock short'>
-                                <p>Generate an asymmetric key pair.
-TODO: this may not clear memory properly</p>
+                                <p>Generate an asymmetric key pair.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -192,14 +193,14 @@ TODO: this may not clear memory properly</p>
                            <td><a class='type' href='type.PublicKey.html'
                                   title='proj_crypto::asymmetric::PublicKey'>PublicKey</a></td>
                            <td class='docblock short'>
-                                <p>Public Key - just an alias. Implements drop() so the memory will be wiped when this goes out of scope</p>
+                                <p>Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='type' href='type.SecretKey.html'
                                   title='proj_crypto::asymmetric::SecretKey'>SecretKey</a></td>
                            <td class='docblock short'>
-                                <p>Secret Key - just an alias. Implements drop() so the memory will be wiped when this goes out of scope</p>
+                                <p>Secret Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

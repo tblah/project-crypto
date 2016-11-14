@@ -233,8 +233,9 @@
 <span id="189">189</span>
 <span id="190">190</span>
 <span id="191">191</span>
+<span id="192">192</span>
 </pre><pre class='rust '>
-<span class='doccomment'>//! This module provides an implementation of AuthenticatedEncryptorDecryptor.</span>
+<span class='doccomment'>//! This module provides an implementation of authenticated encryption and plain authentication for a given key. This should be used through the interface in super::</span>
 <span class='doccomment'>//! </span>
 <span class='doccomment'>//! # Cryptography</span>
 <span class='doccomment'>//! Authenticates *first* with HMAC-SHA512 (only the first 256 bytes are used). This was chosen as it is the default authentication mechanism in sodiumoxide.</span>
@@ -264,7 +265,8 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>ChaCha20HmacSha512256</span> {
-    <span class='doccomment'>/// Constructor for ChaCha20HmacSha512256.</span>
+    <span class='doccomment'>/// Constructor for ChaCha20HmacSha512256. This function is annotated to always be inlined so the arguments should not ever be copied around memory.</span>
+    <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>encryption_key</span>: <span class='ident'>chacha20</span>::<span class='ident'>Key</span>, <span class='ident'>authentication_key</span>: <span class='ident'>hmacsha512256</span>::<span class='ident'>Key</span>, <span class='ident'>nonce</span>: <span class='ident'>chacha20</span>::<span class='ident'>Nonce</span>) <span class='op'>-&gt;</span> <span class='ident'>ChaCha20HmacSha512256</span> {
         <span class='ident'>ChaCha20HmacSha512256</span> {
             <span class='ident'>encryption_key</span>: <span class='ident'>encryption_key</span>,

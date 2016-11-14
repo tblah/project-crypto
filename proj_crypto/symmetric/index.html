@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-5' class='srclink' href='../../src/proj_crypto/src/symmetric/mod.rs.html#1-247' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-5' class='srclink' href='../../src/proj_crypto/src/symmetric/mod.rs.html#1-279' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Symmetric encryption module.</p>
 
 <p>This module provides an interface for symmetric (secret key) cryptography. </p>
@@ -105,6 +105,14 @@ Then we encrypt using ChaCha20. ChaCha20 was chosen over the sodiumoxide default
 <span class='macro'>assert</span><span class='macro'>!</span>( <span class='ident'>state</span>.<span class='ident'>verify_auth_tag</span>(<span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='ident'>message</span>, <span class='ident'>message_number</span>) );</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Digest.html'
+                                  title='proj_crypto::symmetric::Digest'>Digest</a></td>
+                           <td class='docblock short'>
+                                <p>A wrapper around sha256::Digest so that we can implement Drop on it to clean up the memory when it goes out of scope.
+This is necessary because often our shared secret keys are sha256 digests.</p>
+                           </td>
+                       </tr>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.State.html'
                                   title='proj_crypto::symmetric::State'>State</a></td>
