@@ -33,7 +33,6 @@
 //! # extern crate sodiumoxide;
 //! # extern crate proj_crypto;
 //! # use proj_crypto::asymmetric::*;
-//! use sodiumoxide::randombytes;
 //! use std::str;
 //! 
 //! # fn main() {
@@ -47,7 +46,7 @@
 //!
 //! let device = LongTermKeys {
 //!     my_public_key: d_pk.clone(),
-//!     my_secret_key: d_sk,
+//!     my_secret_key: d_sk.clone(),
 //!     their_public_key: s_pk.clone(),
 //! };
 //!
@@ -63,8 +62,15 @@
 //! // Message from the server
 //! let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
 //!
+//! // The Device should verify this message
+//! assert!(device.device_verify_server_msg(&d_pk_session, &d_sk_session, &plaintext, 0, &auth_tag));
+//!
+//! // the device should now deconstruct the server message to get the public key and challenge (this is bad code so that it is short for demo purposes. Don't copy it)
+//! let (server_pub_key_bytes, challenge_recvd) = plaintext.split_at(PUBLIC_KEY_BYTES);
+//! let server_pub_key = public_key_from_slice(&server_pub_key_bytes).unwrap();
+//!
 //! // Challenge response from the device
-//! let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, 0, 1).unwrap();
+//! let (device_session_keys, ciphertext) = device.device_second(&server_pub_key, challenge_recvd, &d_pk_session, &d_sk_session, 1);
 //!
 //! // server verifying the client's challenge response
 //! assert!(server_verify_response(&server_session_keys, &ciphertext, 1, &challenge));
@@ -96,6 +102,7 @@
 
 use super::symmetric;
 use super::symmetric::Digest;
+use super::symmetric::AUTH_TAG_BYTES;
 use sodiumoxide::crypto::scalarmult::curve25519;
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::utils::memzero;
@@ -106,6 +113,8 @@ use sodiumoxide::utils::memcmp;
 pub type PublicKey = curve25519::GroupElement; 
 /// The number of bytes in a PublicKey
 pub const PUBLIC_KEY_BYTES: usize = curve25519::GROUPELEMENTBYTES;
+/// create a public key from a slice
+pub fn public_key_from_slice(slice: &[u8]) -> Option<PublicKey> { curve25519::GroupElement::from_slice(slice) }
 
 /// Secret Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
 pub type SecretKey = curve25519::Scalar;
@@ -208,7 +217,7 @@ impl LongTermKeys {
     /// the first message from the server. This comes after receiving the first message from the device.
     ///
     /// Returns (the random challenge, the session keys, the authentication tag to send to the device, the plaintext to send to the device)
-    pub fn server_first(&self, device_ephemeral_public: &PublicKey, message_number: u16) -> (Vec<u8>, SessionKeys, [u8; symmetric::AUTH_TAG_BYTES], Vec<u8>) {
+    pub fn server_first(&self, device_ephemeral_public: &PublicKey, message_number: u16) -> (Vec<u8>, SessionKeys, [u8; AUTH_TAG_BYTES], Vec<u8>) {
         // generate ephemeral keypair
         let (pub_key, sec_key) = gen_keypair(); // sec_key implements drop() to clear memory
         
@@ -239,25 +248,29 @@ impl LongTermKeys {
         // return stuff
         (random_challenge, session_keys, auth_tag, plaintext)
     } // ephemeral keys destroyed here :-)
-    
-    /// The second message sent by the device. As far as the device is concerned, the setup is complete after sending this.
-    ///
-    /// Returns None if the server's message is invalid and Some((session keys, ciphertext to send to the server)) if everything checks out
-    pub fn device_second(&self, server_message: &Vec<u8>, auth_tag: &[u8; symmetric::AUTH_TAG_BYTES], ephemeral_pk: &PublicKey, ephemeral_sk: &SecretKey, server_message_n: u16, my_message_n: u16)
-                         -> Option<(SessionKeys, Vec<u8>)> {
+ 
+    /// for verifying the first message sent by the server
+    pub fn device_verify_server_msg(&self, ephemeral_pk: &PublicKey, ephemeral_sk: &SecretKey, msg: &[u8], server_message_n: u16, auth_tag: &[u8]) -> bool {
+        assert_eq!(auth_tag.len(), AUTH_TAG_BYTES);
+
         // key exchange between the server's public key and the ephemeral private key
         let from_server_auth = &key_exchange(&self.their_public_key, ephemeral_sk, ephemeral_pk, true).as_slice();
 
         // test the auth on the server's message
         let server_authenticator = symmetric::State::new(from_server_auth, from_server_auth); // just set the encryption key that we don't have (and won't use) as the same  
-        if !server_authenticator.verify_auth_tag(auth_tag, server_message, server_message_n) {
-            return None; // symmetric::State implements drop so don't worry about leaking here
-        };
 
-        // check message length and then split it into what we want
-        assert_eq!(server_message.len(), PUBLIC_KEY_BYTES + CHALLENGE_BYTES);
-        let (server_ephemeral_pk_bytes, random_challenge) = server_message.split_at(PUBLIC_KEY_BYTES);
-        let server_ephemeral_pk = curve25519::GroupElement::from_slice(server_ephemeral_pk_bytes).unwrap();
+        server_authenticator.verify_auth_tag(auth_tag, msg, server_message_n) 
+    }
+   
+    /// The second message sent by the device. As far as the device is concerned, the setup is complete after sending this.
+    ///
+    /// Returns (session keys, ciphertext to send to the server) 
+    pub fn device_second(&self, server_ephemeral_pk: &PublicKey, random_challenge: &[u8], ephemeral_pk: &PublicKey, ephemeral_sk: &SecretKey, message_n: u16)
+                         -> (SessionKeys, Vec<u8>) {
+        assert_eq!(random_challenge.len(), CHALLENGE_BYTES);
+
+        // re-derive this so that we don't have to copy it everywhere between parsing the server message and sending this
+        let from_server_auth = &key_exchange(&self.their_public_key, ephemeral_sk, ephemeral_pk, true).as_slice();
 
         // different encryption keys for each direction
         let encryption_key_shared = key_exchange(&server_ephemeral_pk, ephemeral_sk, ephemeral_pk, true);
@@ -271,9 +284,9 @@ impl LongTermKeys {
         };
 
         // encrypt and authenticate the random challenge for sending to the server
-        let ciphertext = session_keys.from_device.authenticated_encryption(random_challenge, my_message_n);
+        let ciphertext = session_keys.from_device.authenticated_encryption(random_challenge, message_n);
         
-        Some((session_keys, ciphertext))
+        (session_keys, ciphertext)
     } // encryption_key_shared, session_keys and *_enc_key destroy it's self when it is drop()'ed
 }
  
@@ -304,47 +317,7 @@ mod tests {
 
         assert_eq!(k1, k2);
     }
-    
-    #[test]
-    #[allow(unused_variables)]
-    fn three_messages() {
-        sodiumoxide::init();
-        const MSG_LEN: usize = 32;
-
-        // device long keypair
-        let (d_pk, d_sk) = gen_keypair();
-
-        // server long keypair
-        let (s_pk, s_sk) = gen_keypair();
-
-        let device = LongTermKeys {
-            my_public_key: d_pk.clone(),
-            my_secret_key: d_sk,
-            their_public_key: s_pk.clone(),
-        };
-
-        let server = LongTermKeys {
-            my_public_key: s_pk.clone(),
-            my_secret_key: s_sk,
-            their_public_key: d_pk.clone(),
-        };
-
-        let (d_pk_session, d_sk_session) = device.device_first();
-        let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
-        let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, 0, 1).unwrap();
-
-        // we cannot access the keys directly so let's just check that we can read messages sent by each-other
-        let message = randombytes::randombytes(MSG_LEN);
-        let msg_from_server = server_session_keys.from_server.authenticated_encryption(&message, 1);
-        let msg_from_device = device_session_keys.from_device.authenticated_encryption(&message, 2);
-
-        let msg_recvd_server = server_session_keys.from_device.authenticated_decryption(&msg_from_device, 2).unwrap();
-        let msg_recvd_device = device_session_keys.from_server.authenticated_decryption(&msg_from_server, 1).unwrap();
-
-        assert_eq!(msg_recvd_server, message);
-        assert_eq!(msg_recvd_device, message);
-    }
-
+ 
     #[test]
     fn full_exchange() {
         sodiumoxide::init();
@@ -370,7 +343,14 @@ mod tests {
 
         let (d_pk_session, d_sk_session) = device.device_first();
         let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
-        let (device_session_keys, ciphertext) = device.device_second(&plaintext, &auth_tag, &d_pk_session, &d_sk_session, 0, 1).unwrap();
+
+        assert!(device.device_verify_server_msg(&d_pk_session, &d_sk_session, &plaintext, 0, &auth_tag));
+
+        // ugly parse
+        let (s_pk_session_bytes, _) = plaintext.split_at(PUBLIC_KEY_BYTES);
+        let s_pk_session = public_key_from_slice(s_pk_session_bytes).unwrap();
+
+        let (device_session_keys, ciphertext) = device.device_second(&s_pk_session, &challenge, &d_pk_session, &d_sk_session, 1);
 
         // server verifying the client's challenge response
         assert!(server_verify_response(&server_session_keys, &ciphertext, 1, &challenge));
@@ -386,5 +366,4 @@ mod tests {
         assert_eq!(msg_recvd_server, message);
         assert_eq!(msg_recvd_device, message);
     }
-
 }
