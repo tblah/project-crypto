@@ -88,7 +88,7 @@ use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
 use std::mem;
 use sodiumoxide::utils::memzero;
-pub use self::chacha20hmacsha512256::AUTH_TAG_LENGTH;
+pub use self::chacha20hmacsha512256::AUTH_TAG_BYTES;
 
 /// A wrapper around sha256::Digest so that we can implement Drop on it to clean up the memory when it goes out of scope.
 /// This is necessary because often our shared secret keys are sha256 digests.
@@ -123,9 +123,6 @@ impl Digest {
         return_val
     }
 }
-
-/// Length of an authentication tag, so that users don't have to use ...::auth::hmacsha512256
-pub const AUTH_TAG_BYTES: usize = hmacsha512256::TAGBYTES;
 
 /// Stores the state of the symmetric encryption system.
 /// Memory is zeroed when this goes out of scope
