@@ -88,6 +88,7 @@ use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
 use std::mem;
 use sodiumoxide::utils::memzero;
+pub use self::chacha20hmacsha512256::AUTH_TAG_LENGTH;
 
 /// A wrapper around sha256::Digest so that we can implement Drop on it to clean up the memory when it goes out of scope.
 /// This is necessary because often our shared secret keys are sha256 digests.

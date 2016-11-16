@@ -19,6 +19,9 @@
 use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 
+/// The length of an authentication tag in bytes
+pub const AUTH_TAG_LENGTH: usize = hmacsha512256::TAGBYTES;
+
 /// Struct for storing the state of the symmetric encryption and authentication system.
 /// You do not need to worry about destroying these data properly as this is done within sodiumoxide whenever it's types go out of scope.
 pub struct ChaCha20HmacSha512256 {
