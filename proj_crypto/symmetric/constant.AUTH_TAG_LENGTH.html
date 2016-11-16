@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `SessionKeys` struct in crate `proj_crypto`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, SessionKeys">
+    <meta name="description" content="API documentation for the Rust `AUTH_TAG_LENGTH` constant in crate `proj_crypto`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, AUTH_TAG_LENGTH">
 
-    <title>proj_crypto::asymmetric::SessionKeys - Rust</title>
+    <title>proj_crypto::symmetric::AUTH_TAG_LENGTH - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
@@ -28,7 +28,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>proj_crypto</a>::<wbr><a href='index.html'>asymmetric</a></p><script>window.sidebarCurrent = {name: 'SessionKeys', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>proj_crypto</a>::<wbr><a href='index.html'>symmetric</a></p><script>window.sidebarCurrent = {name: 'AUTH_TAG_LENGTH', ty: 'constant', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -42,20 +42,13 @@
         </form>
     </nav>
 
-    <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>proj_crypto</a>::<wbr><a href='index.html'>asymmetric</a>::<wbr><a class='struct' href=''>SessionKeys</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content constant">
+<h1 class='fqn'><span class='in-band'><a href='../index.html'>proj_crypto</a>::<wbr><a href='index.html'>symmetric</a>::<wbr><a class='constant' href=''>AUTH_TAG_LENGTH</a></span><span class='out-of-band'><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-185' class='srclink' href='../../src/proj_crypto/src/asymmetric.rs.html#139-144' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct SessionKeys {
-    pub from_device: <a class='struct' href='../../proj_crypto/symmetric/struct.State.html' title='proj_crypto::symmetric::State'>State</a>,
-    pub from_server: <a class='struct' href='../../proj_crypto/symmetric/struct.State.html' title='proj_crypto::symmetric::State'>State</a>,
-}</pre><div class='docblock'><p>stores session keys</p>
-</div><h2 class='fields'>Fields</h2><span id='structfield.from_device' class='structfield'><code>from_device: <a class='struct' href='../../proj_crypto/symmetric/struct.State.html' title='proj_crypto::symmetric::State'>State</a></code>
-                           </span><span class='stab '></span><div class='docblock'><p>symmetric state for using with messages to be sent or received from the device</p>
-</div><span id='structfield.from_server' class='structfield'><code>from_server: <a class='struct' href='../../proj_crypto/symmetric/struct.State.html' title='proj_crypto::symmetric::State'>State</a></code>
-                           </span><span class='stab '></span><div class='docblock'><p>symmetric state for using with messages to be sent or received from the server</p>
+               </span><a id='src-9' class='srclink' href='../../src/proj_crypto/src/symmetric/chacha20hmacsha512256.rs.html#23' title='goto source code'>[src]</a></span></h1>
+<pre class='rust const'>pub const AUTH_TAG_LENGTH: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><code> = </code><code>hmacsha512256::TAGBYTES</code></pre><div class='docblock'><p>The length of an authentication tag in bytes</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

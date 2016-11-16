@@ -321,6 +321,7 @@
 <span id="277">277</span>
 <span id="278">278</span>
 <span id="279">279</span>
+<span id="280">280</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Symmetric encryption module.</span>
 <span class='doccomment'>//! </span>
@@ -412,6 +413,7 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>sha256</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>utils</span>::<span class='ident'>memzero</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>chacha20hmacsha512256</span>::<span class='ident'>AUTH_TAG_LENGTH</span>;
 
 <span class='doccomment'>/// A wrapper around sha256::Digest so that we can implement Drop on it to clean up the memory when it goes out of scope.</span>
 <span class='doccomment'>/// This is necessary because often our shared secret keys are sha256 digests.</span>
