@@ -432,87 +432,6 @@
 <span id="388">388</span>
 <span id="389">389</span>
 <span id="390">390</span>
-<span id="391">391</span>
-<span id="392">392</span>
-<span id="393">393</span>
-<span id="394">394</span>
-<span id="395">395</span>
-<span id="396">396</span>
-<span id="397">397</span>
-<span id="398">398</span>
-<span id="399">399</span>
-<span id="400">400</span>
-<span id="401">401</span>
-<span id="402">402</span>
-<span id="403">403</span>
-<span id="404">404</span>
-<span id="405">405</span>
-<span id="406">406</span>
-<span id="407">407</span>
-<span id="408">408</span>
-<span id="409">409</span>
-<span id="410">410</span>
-<span id="411">411</span>
-<span id="412">412</span>
-<span id="413">413</span>
-<span id="414">414</span>
-<span id="415">415</span>
-<span id="416">416</span>
-<span id="417">417</span>
-<span id="418">418</span>
-<span id="419">419</span>
-<span id="420">420</span>
-<span id="421">421</span>
-<span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Asymmetric Encryption Module. </span>
 <span class='doccomment'>//! </span>
@@ -525,18 +444,17 @@
 <span class='doccomment'>//! # The Protocol</span>
 <span class='doccomment'>//! ## Device Message 0</span>
 <span class='doccomment'>//! + generate ephemeral keypair</span>
-<span class='doccomment'>//! + compute authentication key for receiving from the server</span>
 <span class='doccomment'>//! + send ephemeral key to the server</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Server Message 0</span>
 <span class='doccomment'>//! + Generate ephemeral keypair</span>
-<span class='doccomment'>//! + Compute all session keys</span>
+<span class='doccomment'>//! + Compute session keys</span>
 <span class='doccomment'>//! + Pick a random challenge number</span>
 <span class='doccomment'>//! + Send ephemeral public key and r to the client, plaintext authentication (as the client does not yet have the encryption key)</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Device Message 1</span>
 <span class='doccomment'>//! + Check auth</span>
-<span class='doccomment'>//! + Compute remaining session keys</span>
+<span class='doccomment'>//! + Compute session keys</span>
 <span class='doccomment'>//! + Send r to server, encrypted and authenticated. This authenticates the ephemeral public key we sent in message 0</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Server</span>
@@ -575,13 +493,13 @@
 <span class='doccomment'>//! };</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // First message from the device</span>
-<span class='doccomment'>//! let (d_pk_session, d_sk_session, auth_from_server) = device.device_first();</span>
+<span class='doccomment'>//! let (d_pk_session, d_sk_session) = device.device_first();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // Message from the server</span>
 <span class='doccomment'>//! let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&amp;d_pk_session, 0);</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // Challenge response from the device</span>
-<span class='doccomment'>//! let (device_session_keys, ciphertext) = device.device_second(&amp;plaintext, &amp;auth_tag, &amp;d_pk_session, &amp;d_sk_session, &amp;auth_from_server, 0, 1).unwrap();</span>
+<span class='doccomment'>//! let (device_session_keys, ciphertext) = device.device_second(&amp;plaintext, &amp;auth_tag, &amp;d_pk_session, &amp;d_sk_session, 0, 1).unwrap();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // server verifying the client&#39;s challenge response</span>
 <span class='doccomment'>//! assert!(server_verify_response(&amp;server_session_keys, &amp;ciphertext, 1, &amp;challenge));</span>
@@ -660,8 +578,6 @@
     <span class='kw'>pub</span> <span class='ident'>from_server</span>: <span class='ident'>symmetric</span>::<span class='ident'>State</span>,
 }
 
-<span class='kw'>const</span> <span class='ident'>SHARED_SECRET_LENGTH</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>DIGESTBYTES</span>; <span class='comment'>// = 32 = (256 bits)</span>
-
 <span class='doccomment'>/// The length of the challenge sent by the server to the client</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CHALLENGE_BYTES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>32</span>;
 
@@ -717,14 +633,11 @@
     <span class='doccomment'>/// The first message from the device. This initiates the exchange.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns (ephemeral public key, ephemeral secret key, key for authenticating messages sent by the server)</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_first</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>, [<span class='ident'>u8</span>; <span class='ident'>SHARED_SECRET_LENGTH</span>]) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_first</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>) {
         <span class='comment'>// generate ephemeral keypair</span>
         <span class='kw'>let</span> (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>(); <span class='comment'>// don&#39;t worry, sec_key implements drop() to clear memory</span>
 
-        <span class='comment'>// key exchange between the server&#39;s public key and the ephemeral private key</span>
-        <span class='kw'>let</span> <span class='ident'>auth_from_server</span> <span class='op'>=</span> <span class='ident'>key_exchange</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>their_public_key</span>, <span class='kw-2'>&amp;</span><span class='ident'>sec_key</span>, <span class='kw-2'>&amp;</span><span class='ident'>pub_key</span>, <span class='bool-val'>true</span>);
-
-        (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>, <span class='ident'>auth_from_server</span>.<span class='ident'>as_slice</span>())
+        (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>)
     }
 
     <span class='doccomment'>/// the first message from the server. This comes after receiving the first message from the device.</span>
@@ -765,8 +678,11 @@
     <span class='doccomment'>/// The second message sent by the device. As far as the device is concerned, the setup is complete after sending this.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns None if the server&#39;s message is invalid and Some((session keys, ciphertext to send to the server)) if everything checks out</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>server_message</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>auth_tag</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>; <span class='ident'>symmetric</span>::<span class='ident'>AUTH_TAG_BYTES</span>], <span class='ident'>ephemeral_pk</span>: <span class='kw-2'>&amp;</span><span class='ident'>PublicKey</span>, <span class='ident'>ephemeral_sk</span>: <span class='kw-2'>&amp;</span><span class='ident'>SecretKey</span>, <span class='ident'>from_server_auth</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>; <span class='ident'>SHARED_SECRET_LENGTH</span>], <span class='ident'>server_message_n</span>: <span class='ident'>u16</span>, <span class='ident'>my_message_n</span>: <span class='ident'>u16</span>)
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>server_message</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>auth_tag</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>; <span class='ident'>symmetric</span>::<span class='ident'>AUTH_TAG_BYTES</span>], <span class='ident'>ephemeral_pk</span>: <span class='kw-2'>&amp;</span><span class='ident'>PublicKey</span>, <span class='ident'>ephemeral_sk</span>: <span class='kw-2'>&amp;</span><span class='ident'>SecretKey</span>, <span class='ident'>server_message_n</span>: <span class='ident'>u16</span>, <span class='ident'>my_message_n</span>: <span class='ident'>u16</span>)
                          <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>SessionKeys</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span> {
+        <span class='comment'>// key exchange between the server&#39;s public key and the ephemeral private key</span>
+        <span class='kw'>let</span> <span class='ident'>from_server_auth</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>key_exchange</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>their_public_key</span>, <span class='ident'>ephemeral_sk</span>, <span class='ident'>ephemeral_pk</span>, <span class='bool-val'>true</span>).<span class='ident'>as_slice</span>();
+
         <span class='comment'>// test the auth on the server&#39;s message</span>
         <span class='kw'>let</span> <span class='ident'>server_authenticator</span> <span class='op'>=</span> <span class='ident'>symmetric</span>::<span class='ident'>State</span>::<span class='ident'>new</span>(<span class='ident'>from_server_auth</span>, <span class='ident'>from_server_auth</span>); <span class='comment'>// just set the encryption key that we don&#39;t have (and won&#39;t use) as the same  </span>
         <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>server_authenticator</span>.<span class='ident'>verify_auth_tag</span>(<span class='ident'>auth_tag</span>, <span class='ident'>server_message</span>, <span class='ident'>server_message_n</span>) {
@@ -808,7 +724,6 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='kw'>super</span>::<span class='ident'>symmetric</span>;
     <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sodiumoxide</span>;
     <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>randombytes</span>;
 
@@ -825,44 +740,6 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>k1</span>, <span class='ident'>k2</span>);
     }
     
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_variables</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>auth_from_server</span>() {
-        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
-
-        <span class='comment'>// device long keypair</span>
-        <span class='kw'>let</span> (<span class='ident'>d_pk</span>, <span class='ident'>d_sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
-
-        <span class='comment'>// server long keypair</span>
-        <span class='kw'>let</span> (<span class='ident'>s_pk</span>, <span class='ident'>s_sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
-
-        <span class='kw'>let</span> <span class='ident'>device</span> <span class='op'>=</span> <span class='ident'>LongTermKeys</span> {
-            <span class='ident'>my_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>my_secret_key</span>: <span class='ident'>d_sk</span>,
-            <span class='ident'>their_public_key</span>: <span class='ident'>s_pk</span>.<span class='ident'>clone</span>(),
-        };
-
-        <span class='kw'>let</span> <span class='ident'>server</span> <span class='op'>=</span> <span class='ident'>LongTermKeys</span> {
-            <span class='ident'>my_public_key</span>: <span class='ident'>s_pk</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>my_secret_key</span>: <span class='ident'>s_sk</span>,
-            <span class='ident'>their_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
-        };
-
-        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>, <span class='ident'>auth_from_server</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
-        <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
-
-        <span class='comment'>// we can&#39;t access the auth_from_server key calculated by the server directly so try authenticating with both of them</span>
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>);
-        <span class='kw'>let</span> <span class='ident'>k_e</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='number'>32</span>); <span class='comment'>// just needed so that we can make the symmetric::state object</span>
-        <span class='kw'>let</span> <span class='ident'>message_number</span> <span class='op'>=</span> <span class='number'>0</span>;
-
-        <span class='kw'>let</span> <span class='ident'>auth_tag</span> <span class='op'>=</span> <span class='ident'>session_keys</span>.<span class='ident'>from_server</span>.<span class='ident'>plain_auth_tag</span>(<span class='ident'>message</span>, <span class='ident'>message_number</span>);
-
-        <span class='kw'>let</span> <span class='ident'>dummy_device_state</span> <span class='op'>=</span> <span class='ident'>symmetric</span>::<span class='ident'>State</span>::<span class='ident'>new</span>(<span class='ident'>k_e</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>);
-
-        <span class='macro'>assert</span><span class='macro'>!</span>( <span class='ident'>dummy_device_state</span>.<span class='ident'>verify_auth_tag</span>(<span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='ident'>message</span>, <span class='ident'>message_number</span>) );
-    }
-
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_variables</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>three_messages</span>() {
@@ -887,9 +764,9 @@
             <span class='ident'>their_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
         };
 
-        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>, <span class='ident'>auth_from_server</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
+        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
         <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
-        <span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
 
         <span class='comment'>// we cannot access the keys directly so let&#39;s just check that we can read messages sent by each-other</span>
         <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='ident'>MSG_LEN</span>);
@@ -901,45 +778,6 @@
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg_recvd_server</span>, <span class='ident'>message</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg_recvd_device</span>, <span class='ident'>message</span>);
-    }
-
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_variables</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>device_auth_check</span>() {
-        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
-
-        <span class='comment'>// generate an incorrect server authentication key</span>
-        <span class='kw'>let</span> <span class='ident'>false_auth_key_bytes</span> <span class='op'>=</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>(<span class='kw'>super</span>::<span class='ident'>SHARED_SECRET_LENGTH</span>);
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>false_auth_key</span>: [<span class='ident'>u8</span>; <span class='kw'>super</span>::<span class='ident'>SHARED_SECRET_LENGTH</span>] <span class='op'>=</span> [<span class='number'>0</span>; <span class='kw'>super</span>::<span class='ident'>SHARED_SECRET_LENGTH</span>];
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='kw'>super</span>::<span class='ident'>SHARED_SECRET_LENGTH</span> {
-            <span class='ident'>false_auth_key</span>[<span class='ident'>i</span>] <span class='op'>=</span> <span class='ident'>false_auth_key_bytes</span>[<span class='ident'>i</span>];
-        }
-
-        <span class='comment'>// device long keypair</span>
-        <span class='kw'>let</span> (<span class='ident'>d_pk</span>, <span class='ident'>d_sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
-
-        <span class='comment'>// server long keypair</span>
-        <span class='kw'>let</span> (<span class='ident'>s_pk</span>, <span class='ident'>s_sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
-
-        <span class='kw'>let</span> <span class='ident'>device</span> <span class='op'>=</span> <span class='ident'>LongTermKeys</span> {
-            <span class='ident'>my_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>my_secret_key</span>: <span class='ident'>d_sk</span>,
-            <span class='ident'>their_public_key</span>: <span class='ident'>s_pk</span>.<span class='ident'>clone</span>(),
-        };
-
-        <span class='kw'>let</span> <span class='ident'>server</span> <span class='op'>=</span> <span class='ident'>LongTermKeys</span> {
-            <span class='ident'>my_public_key</span>: <span class='ident'>s_pk</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>my_secret_key</span>: <span class='ident'>s_sk</span>,
-            <span class='ident'>their_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
-        };
-
-        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>, <span class='ident'>auth_from_server</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
-        <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
-
-        <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>false_auth_key</span>, <span class='number'>0</span>, <span class='number'>1</span>);
-
-        <span class='comment'>// authentication should have failed</span>
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>result</span>.<span class='ident'>is_none</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -965,9 +803,9 @@
             <span class='ident'>their_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
         };
 
-        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>, <span class='ident'>auth_from_server</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
+        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
         <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
-        <span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
 
         <span class='comment'>// server verifying the client&#39;s challenge response</span>
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>server_verify_response</span>(<span class='kw-2'>&amp;</span><span class='ident'>server_session_keys</span>, <span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>, <span class='number'>1</span>, <span class='kw-2'>&amp;</span><span class='ident'>challenge</span>));

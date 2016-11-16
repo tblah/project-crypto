@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-163' class='srclink' href='../../src/proj_crypto/src/asymmetric.rs.html#1-471' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-163' class='srclink' href='../../src/proj_crypto/src/asymmetric.rs.html#1-390' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Asymmetric Encryption Module.</p>
 
 <p>This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal, explained here <a href="https://whispersystems.org/blog/advanced-ratcheting/">https://whispersystems.org/blog/advanced-ratcheting/</a>.</p>
@@ -60,14 +60,13 @@
 <h2 id='device-message-0' class='section-header'><a href='#device-message-0'>Device Message 0</a></h2>
 <ul>
 <li>generate ephemeral keypair</li>
-<li>compute authentication key for receiving from the server</li>
 <li>send ephemeral key to the server</li>
 </ul>
 
 <h2 id='server-message-0' class='section-header'><a href='#server-message-0'>Server Message 0</a></h2>
 <ul>
 <li>Generate ephemeral keypair</li>
-<li>Compute all session keys</li>
+<li>Compute session keys</li>
 <li>Pick a random challenge number</li>
 <li>Send ephemeral public key and r to the client, plaintext authentication (as the client does not yet have the encryption key)</li>
 </ul>
@@ -75,7 +74,7 @@
 <h2 id='device-message-1' class='section-header'><a href='#device-message-1'>Device Message 1</a></h2>
 <ul>
 <li>Check auth</li>
-<li>Compute remaining session keys</li>
+<li>Compute session keys</li>
 <li>Send r to server, encrypted and authenticated. This authenticates the ephemeral public key we sent in message 0</li>
 </ul>
 
@@ -113,13 +112,13 @@
 };
 
 <span class='comment'>// First message from the device</span>
-<span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>, <span class='ident'>auth_from_server</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
+<span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
 
 <span class='comment'>// Message from the server</span>
 <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
 
 <span class='comment'>// Challenge response from the device</span>
-<span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_from_server</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> (<span class='ident'>device_session_keys</span>, <span class='ident'>ciphertext</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_second</span>(<span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='number'>0</span>, <span class='number'>1</span>).<span class='ident'>unwrap</span>();
 
 <span class='comment'>// server verifying the client&#39;s challenge response</span>
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>server_verify_response</span>(<span class='kw-2'>&amp;</span><span class='ident'>server_session_keys</span>, <span class='kw-2'>&amp;</span><span class='ident'>ciphertext</span>, <span class='number'>1</span>, <span class='kw-2'>&amp;</span><span class='ident'>challenge</span>));
