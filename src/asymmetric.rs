@@ -291,7 +291,11 @@ impl LongTermKeys {
 }
  
 /// For the server to verify the challenge response from the client. 
-pub fn server_verify_response(session_keys: &SessionKeys, response: &Vec<u8>, message_number: u16, challenge: &Vec<u8>) -> bool {
+pub fn server_verify_response(session_keys: &SessionKeys, response: &Vec<u8>, message_number: u16, challenge: &[u8]) -> bool {
+    if challenge.len() != CHALLENGE_BYTES {
+        return false;
+    }
+    
     match session_keys.from_device.authenticated_decryption(response, message_number) {
         None => false,
         Some(c) => memcmp(challenge, &c), // constant time comparison
