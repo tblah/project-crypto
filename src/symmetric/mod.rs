@@ -86,7 +86,6 @@ use self::chacha20hmacsha512256::ChaCha20HmacSha512256;
 use sodiumoxide::crypto::stream::chacha20;
 use sodiumoxide::crypto::auth::hmacsha512256;
 use sodiumoxide::crypto::hash::sha256;
-use std::mem;
 use sodiumoxide::utils::memzero;
 pub use self::chacha20hmacsha512256::AUTH_TAG_BYTES;
 
@@ -188,10 +187,8 @@ impl State {
 /// hashes the message number to make the nonce (remove all the structure)
 fn hash_message_number(num: u16) -> [u8; chacha20::NONCEBYTES] {
     let digest;
-    unsafe {  // unsafe for transmute
-        let n = mem::transmute::<u16, [u8; 2]>(num);
-        digest = sha256::hash(&n);
-    }
+    let n = [(num >> 8) as u8, (num & 0xFF) as u8];
+    digest = sha256::hash(&n);
     let sha256::Digest(digest_data) = digest;
 
     // done in a clumsy-looking way so that this doesn't end up being a slice

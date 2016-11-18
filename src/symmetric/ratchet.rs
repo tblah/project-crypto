@@ -29,7 +29,6 @@ pub struct KeyIteration {
 }
 
 /// private utility function to hash a Digest n times
-#[allow(unused_variables)] // for loop iterator variable
 fn hash_n_times(d: &Digest, n: u16) -> Digest {
     if n == 0 {
         return d.clone();
@@ -39,7 +38,7 @@ fn hash_n_times(d: &Digest, n: u16) -> Digest {
     let mut digest = Digest{ digest: sha256::hash(&d.as_slice()) };
     let mut digest_data = digest.as_slice();
             
-    for i in 1..n { // loops n-1 times
+    for _ in 1..n { // loops n-1 times
         digest = Digest{ digest: sha256::hash(&digest_data) };
         digest_data = digest.as_slice();
     };
@@ -98,7 +97,6 @@ mod tests {
 
     #[test]
     #[should_panic]
-    #[allow(unused_must_use)] // the panic line looks unused
     fn nth_key_bad_n() {
         sodiumoxide::init();
         let key0 = &randombytes::randombytes(32);
@@ -106,7 +104,7 @@ mod tests {
         key_iteration.increase_iter_to(5);
 
         // panic:
-        key_iteration.nth_key(4);
+        let _ = key_iteration.nth_key(4);
     }
 
     #[test]
