@@ -120,6 +120,8 @@ pub fn public_key_from_slice(slice: &[u8]) -> Option<PublicKey> { curve25519::Gr
 pub type SecretKey = curve25519::Scalar;
 /// The number of bytes in a SecretKey
 pub const SECRET_KEY_BYTES: usize = curve25519::SCALARBYTES;
+/// create a secret key from a slice
+pub fn secret_key_from_slice(slice: &[u8]) -> Option<SecretKey> { curve25519::Scalar::from_slice(slice) }
 
 /// Generate an asymmetric key pair.
 pub fn gen_keypair() -> (PublicKey, SecretKey) {
