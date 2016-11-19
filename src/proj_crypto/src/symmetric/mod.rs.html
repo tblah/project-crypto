@@ -316,9 +316,6 @@
 <span id="272">272</span>
 <span id="273">273</span>
 <span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Symmetric encryption module.</span>
 <span class='doccomment'>//! </span>
@@ -408,7 +405,6 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>stream</span>::<span class='ident'>chacha20</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>auth</span>::<span class='ident'>hmacsha512256</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>sha256</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>utils</span>::<span class='ident'>memzero</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>chacha20hmacsha512256</span>::<span class='ident'>AUTH_TAG_BYTES</span>;
 
@@ -510,10 +506,8 @@
 <span class='doccomment'>/// hashes the message number to make the nonce (remove all the structure)</span>
 <span class='kw'>fn</span> <span class='ident'>hash_message_number</span>(<span class='ident'>num</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> [<span class='ident'>u8</span>; <span class='ident'>chacha20</span>::<span class='ident'>NONCEBYTES</span>] {
     <span class='kw'>let</span> <span class='ident'>digest</span>;
-    <span class='kw'>unsafe</span> {  <span class='comment'>// unsafe for transmute</span>
-        <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>mem</span>::<span class='ident'>transmute</span>::<span class='op'>&lt;</span><span class='ident'>u16</span>, [<span class='ident'>u8</span>; <span class='number'>2</span>]<span class='op'>&gt;</span>(<span class='ident'>num</span>);
-        <span class='ident'>digest</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>n</span>);
-    }
+    <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> [(<span class='ident'>num</span> <span class='op'>&gt;&gt;</span> <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>, (<span class='ident'>num</span> <span class='kw-2'>&amp;</span> <span class='number'>0xFF</span>) <span class='kw'>as</span> <span class='ident'>u8</span>];
+    <span class='ident'>digest</span> <span class='op'>=</span> <span class='ident'>sha256</span>::<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>n</span>);
     <span class='kw'>let</span> <span class='ident'>sha256</span>::<span class='ident'>Digest</span>(<span class='ident'>digest_data</span>) <span class='op'>=</span> <span class='ident'>digest</span>;
 
     <span class='comment'>// done in a clumsy-looking way so that this doesn&#39;t end up being a slice</span>
