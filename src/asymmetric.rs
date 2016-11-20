@@ -57,7 +57,7 @@
 //! };
 //!
 //! // First message from the device
-//! let (d_pk_session, d_sk_session) = device.device_first();
+//! let (d_pk_session, d_sk_session) = device_first();
 //!
 //! // Message from the server
 //! let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
@@ -205,17 +205,17 @@ fn hash_two_things(thing1: &[u8], thing2: &[u8]) -> Digest {
     result // Digest implements drop() to clear the memory so don't worry about copying
 }
 
+/// The first message from the device. This initiates the exchange.
+///
+/// Returns (ephemeral public key, ephemeral secret key, key for authenticating messages sent by the server)
+pub fn device_first() -> (PublicKey, SecretKey) {
+    // generate ephemeral keypair
+    let (pub_key, sec_key) = gen_keypair(); // don't worry, sec_key implements drop() to clear memory
+
+    (pub_key, sec_key)
+}
+
 impl LongTermKeys {
-    /// The first message from the device. This initiates the exchange.
-    ///
-    /// Returns (ephemeral public key, ephemeral secret key, key for authenticating messages sent by the server)
-    pub fn device_first(&self) -> (PublicKey, SecretKey) {
-        // generate ephemeral keypair
-        let (pub_key, sec_key) = gen_keypair(); // don't worry, sec_key implements drop() to clear memory
-
-        (pub_key, sec_key)
-    }
-
     /// the first message from the server. This comes after receiving the first message from the device.
     ///
     /// Returns (the random challenge, the session keys, the authentication tag to send to the device, the plaintext to send to the device)
@@ -347,7 +347,7 @@ mod tests {
             their_public_key: d_pk.clone(),
         };
 
-        let (d_pk_session, d_sk_session) = device.device_first();
+        let (d_pk_session, d_sk_session) = device_first();
         let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&d_pk_session, 0);
 
         assert!(device.device_verify_server_msg(&d_pk_session, &d_sk_session, &plaintext, 0, &auth_tag));
