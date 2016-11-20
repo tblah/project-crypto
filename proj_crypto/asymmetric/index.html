@@ -111,7 +111,7 @@
 };
 
 <span class='comment'>// First message from the device</span>
-<span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
+<span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device_first</span>();
 
 <span class='comment'>// Message from the server</span>
 <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
@@ -179,6 +179,13 @@ The secret key is safely erased from memory when this goes out of scope</p>
                            </td>
                        </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.device_first.html'
+                                  title='proj_crypto::asymmetric::device_first'>device_first</a></td>
+                           <td class='docblock short'>
+                                <p>The first message from the device. This initiates the exchange.</p>
+                           </td>
+                       </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.gen_keypair.html'
                                   title='proj_crypto::asymmetric::gen_keypair'>gen_keypair</a></td>

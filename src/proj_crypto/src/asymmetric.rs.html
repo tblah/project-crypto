@@ -477,7 +477,7 @@
 <span class='doccomment'>//! };</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // First message from the device</span>
-<span class='doccomment'>//! let (d_pk_session, d_sk_session) = device.device_first();</span>
+<span class='doccomment'>//! let (d_pk_session, d_sk_session) = device_first();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! // Message from the server</span>
 <span class='doccomment'>//! let (challenge, server_session_keys, auth_tag, plaintext) = server.server_first(&amp;d_pk_session, 0);</span>
@@ -625,17 +625,17 @@
     <span class='ident'>result</span> <span class='comment'>// Digest implements drop() to clear the memory so don&#39;t worry about copying</span>
 }
 
+<span class='doccomment'>/// The first message from the device. This initiates the exchange.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// Returns (ephemeral public key, ephemeral secret key, key for authenticating messages sent by the server)</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_first</span>() <span class='op'>-&gt;</span> (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>) {
+    <span class='comment'>// generate ephemeral keypair</span>
+    <span class='kw'>let</span> (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>(); <span class='comment'>// don&#39;t worry, sec_key implements drop() to clear memory</span>
+
+    (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>)
+}
+
 <span class='kw'>impl</span> <span class='ident'>LongTermKeys</span> {
-    <span class='doccomment'>/// The first message from the device. This initiates the exchange.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Returns (ephemeral public key, ephemeral secret key, key for authenticating messages sent by the server)</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>device_first</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>) {
-        <span class='comment'>// generate ephemeral keypair</span>
-        <span class='kw'>let</span> (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>(); <span class='comment'>// don&#39;t worry, sec_key implements drop() to clear memory</span>
-
-        (<span class='ident'>pub_key</span>, <span class='ident'>sec_key</span>)
-    }
-
     <span class='doccomment'>/// the first message from the server. This comes after receiving the first message from the device.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns (the random challenge, the session keys, the authentication tag to send to the device, the plaintext to send to the device)</span>
@@ -767,7 +767,7 @@
             <span class='ident'>their_public_key</span>: <span class='ident'>d_pk</span>.<span class='ident'>clone</span>(),
         };
 
-        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device</span>.<span class='ident'>device_first</span>();
+        <span class='kw'>let</span> (<span class='ident'>d_pk_session</span>, <span class='ident'>d_sk_session</span>) <span class='op'>=</span> <span class='ident'>device_first</span>();
         <span class='kw'>let</span> (<span class='ident'>challenge</span>, <span class='ident'>server_session_keys</span>, <span class='ident'>auth_tag</span>, <span class='ident'>plaintext</span>) <span class='op'>=</span> <span class='ident'>server</span>.<span class='ident'>server_first</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='number'>0</span>);
 
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>device</span>.<span class='ident'>device_verify_server_msg</span>(<span class='kw-2'>&amp;</span><span class='ident'>d_pk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>d_sk_session</span>, <span class='kw-2'>&amp;</span><span class='ident'>plaintext</span>, <span class='number'>0</span>, <span class='kw-2'>&amp;</span><span class='ident'>auth_tag</span>));
