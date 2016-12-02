@@ -1,4 +1,4 @@
-//! Asymmetric Encryption Module. 
+//! Key exchange module
 //! 
 //! This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal, explained here https://whispersystems.org/blog/advanced-ratcheting/.
 //!
@@ -100,40 +100,15 @@
     You should have received a copy of the GNU General Public License
     along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
-use super::symmetric;
-use super::symmetric::Digest;
-use super::symmetric::AUTH_TAG_BYTES;
+use super::super::symmetric;
+use super::super::symmetric::Digest;
+use super::super::symmetric::AUTH_TAG_BYTES;
 use sodiumoxide::crypto::scalarmult::curve25519;
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::utils::memzero;
 use sodiumoxide::randombytes;
 use sodiumoxide::utils::memcmp;
-
-/// Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
-pub type PublicKey = curve25519::GroupElement; 
-/// The number of bytes in a PublicKey
-pub const PUBLIC_KEY_BYTES: usize = curve25519::GROUPELEMENTBYTES;
-/// create a public key from a slice
-pub fn public_key_from_slice(slice: &[u8]) -> Option<PublicKey> { curve25519::GroupElement::from_slice(slice) }
-
-/// Secret Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
-pub type SecretKey = curve25519::Scalar;
-/// The number of bytes in a SecretKey
-pub const SECRET_KEY_BYTES: usize = curve25519::SCALARBYTES;
-/// create a secret key from a slice
-pub fn secret_key_from_slice(slice: &[u8]) -> Option<SecretKey> { curve25519::Scalar::from_slice(slice) }
-
-/// Generate an asymmetric key pair.
-pub fn gen_keypair() -> (PublicKey, SecretKey) {
-    let mut sk_bytes = randombytes::randombytes(curve25519::SCALARBYTES);
-    
-    let sk = curve25519::Scalar::from_slice(&sk_bytes).unwrap();
-    let pk = curve25519::scalarmult_base(&sk);
-
-    memzero(sk_bytes.as_mut_slice());
-
-    (pk, sk) // both implement drop() to clear the memory so don't worry about them being copied
-}
+use super::*;
 
 /// Stores long term keys (e.g. from a certificate authority)
 /// The secret key is safely erased from memory when this goes out of scope
@@ -307,7 +282,7 @@ pub fn server_verify_response(session_keys: &SessionKeys, response: &Vec<u8>, me
 /******************* Tests *******************/
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
     extern crate sodiumoxide;
     use sodiumoxide::randombytes;
 
