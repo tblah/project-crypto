@@ -287,7 +287,7 @@ mod tests {
     use sodiumoxide::randombytes;
 
    #[test]
-    fn key_exchange_test() {
+   fn key_exchange_test() {
         sodiumoxide::init();
         
         let (pk1, sk1) = gen_keypair();
