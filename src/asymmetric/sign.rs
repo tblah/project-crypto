@@ -1,8 +1,6 @@
-//! Asymmetric encryption module.
-//! 
-//! See submodules for documentation.
+//! Public Key Signatures
 //!
-//! Unfortunately key_exchange and sign have to use a different representation of the keypair because libsodium uses incompatible representations of the public key between signatures and key exchanges (public interface to curve25519_mult_base).
+//! Just re-exports of sodiumoxide
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -16,10 +14,4 @@
     You should have received a copy of the GNU General Public License
     along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
-pub mod key_exchange;
-pub mod sign;
-
-
-
-
-
+pub use sodiumoxide::crypto::sign::ed25519::*;
