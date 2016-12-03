@@ -17,7 +17,6 @@
 pub mod key_exchange;
 pub mod sign;
 
-// for backwards compatibility
 pub use self::key_exchange::*;
 
 use sodiumoxide::crypto::scalarmult::curve25519;
@@ -46,10 +45,10 @@ pub fn gen_keypair() -> (PublicKey, SecretKey) {
     let &mut sha512::Digest(ref mut sk_bytes) = &mut sk_hash;
 
     // I don't know why but libsodium does this
-    sk_bytes[0] &= 248;
+    /*sk_bytes[0] &= 248;
     sk_bytes[31] &= 63;
     sk_bytes[31] |= 64;
-    
+    */ 
     let sk = curve25519::Scalar::from_slice(&sk_bytes[0..curve25519::SCALARBYTES]).unwrap();
     let pk = curve25519::scalarmult_base(&sk);
 
