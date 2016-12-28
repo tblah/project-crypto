@@ -149,6 +149,16 @@ pub struct LongTermKeys {
     pub their_public_key: PublicKey,
 }
 
+impl Clone for LongTermKeys {
+    fn clone(&self) -> Self {
+        LongTermKeys {
+            my_public_key: self.my_public_key.clone(),
+            my_secret_key: self.my_secret_key.clone(),
+            their_public_key: self.their_public_key.clone(),
+        }
+    }
+}
+
 /// stores session keys
 pub struct SessionKeys {
     /// symmetric state for using with messages to be sent or received from the device
