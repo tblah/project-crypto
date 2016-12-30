@@ -109,6 +109,8 @@ use sodiumoxide::utils::memzero;
 use sodiumoxide::randombytes;
 use sodiumoxide::utils::memcmp;
 
+pub mod key_id;
+
 /// Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
 pub type PublicKey = curve25519::GroupElement; 
 /// The number of bytes in a PublicKey
