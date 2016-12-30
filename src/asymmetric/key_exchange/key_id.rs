@@ -1,6 +1,36 @@
 //! # Key ID module
 //!
 //! Used to select the correct public key from the other party from the set of known public keys
+//!
+//! # Example
+//! ```
+//! extern crate sodiumoxide;
+//! extern crate proj_crypto;
+//!
+//! use proj_crypto::asymmetric::key_exchange::*;
+//! use proj_crypto::asymmetric::key_exchange::key_id::*;
+//! use std::collections::HashMap;
+//!
+//! # fn main() {
+//! sodiumoxide::init();
+//!
+//! // keypairs
+//! let (me, one, two, three) = (gen_keypair(), gen_keypair(), gen_keypair(), gen_keypair());
+//!
+//! let mut db: HashMap<PublicKeyId, PublicKey> = HashMap::new();
+//! db.insert(id_of_pk(&one.0), one.0.clone());
+//! db.insert(id_of_pk(&two.0), two.0.clone());
+//! db.insert(id_of_pk(&three.0), three.0.clone());
+
+//! // say we get a connection from identity 'two'
+//! let _ = LongTermKeys {
+//!     my_public_key: me.0,
+//!     my_secret_key: me.1,
+//!     their_public_key: find_public_key(&id_of_pk(&two.0), &db).unwrap(), // the unwrap is the test
+//! }; // now that we have a LongTermKeys, we can perform a key exchange
+//! # }
+//! ```
+
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify

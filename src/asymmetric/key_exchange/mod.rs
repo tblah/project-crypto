@@ -9,13 +9,13 @@
 //! # The Protocol
 //! ## Device Message 0
 //! + generate ephemeral keypair
-//! + send ephemeral key to the server
+//! + send ephemeral public key to the server along with the ID of the device's long-term public key
 //!
 //! ## Server Message 0
 //! + Generate ephemeral keypair
 //! + Compute session keys
 //! + Pick a random challenge number
-//! + Send ephemeral public key and r to the client, plaintext authentication (as the client does not yet have the encryption key)
+//! + Send ephemeral public key and r to the client, along with the ID of the server's long-term public key. Plaintext authentication (as the client does not yet have the encryption key)
 //!
 //! ## Device Message 1
 //! + Check auth
