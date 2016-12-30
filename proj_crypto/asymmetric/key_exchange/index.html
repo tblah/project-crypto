@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-162' class='srclink' href='../../../src/proj_crypto/asymmetric/key_exchange.rs.html#1-378' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-162' class='srclink' href='../../../src/proj_crypto/src/asymmetric/key_exchange/mod.rs.html#1-390' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Key exchange module</p>
 
 <p>This module performs the cryptography for the asymmetric key exchange. It is pretty much the same as is used in Signal, explained here <a href="https://whispersystems.org/blog/advanced-ratcheting/">https://whispersystems.org/blog/advanced-ratcheting/</a>.</p>
@@ -60,7 +60,7 @@
 <h2 id='device-message-0' class='section-header'><a href='#device-message-0'>Device Message 0</a></h2>
 <ul>
 <li>generate ephemeral keypair</li>
-<li>send ephemeral key to the server</li>
+<li>send ephemeral public key to the server along with the ID of the device&#39;s long-term public key</li>
 </ul>
 
 <h2 id='server-message-0' class='section-header'><a href='#server-message-0'>Server Message 0</a></h2>
@@ -68,7 +68,7 @@
 <li>Generate ephemeral keypair</li>
 <li>Compute session keys</li>
 <li>Pick a random challenge number</li>
-<li>Send ephemeral public key and r to the client, plaintext authentication (as the client does not yet have the encryption key)</li>
+<li>Send ephemeral public key and r to the client, along with the ID of the server&#39;s long-term public key. Plaintext authentication (as the client does not yet have the encryption key)</li>
 </ul>
 
 <h2 id='device-message-1' class='section-header'><a href='#device-message-1'>Device Message 1</a></h2>
@@ -139,7 +139,15 @@
 
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg_recvd_server</span>, <span class='ident'>message</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg_recvd_device</span>, <span class='ident'>message</span>);</pre>
-</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='key_id/index.html'
+                                  title='proj_crypto::asymmetric::key_exchange::key_id'>key_id</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.LongTermKeys.html'
