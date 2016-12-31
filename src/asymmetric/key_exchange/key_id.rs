@@ -54,7 +54,7 @@ use super::*;
 /// This has to be a custom struct so that I can implement std::hash::Hash
 #[derive(PartialEq, Eq)]
 pub struct PublicKeyId {
-    digest: sha256::Digest,
+    pub digest: sha256::Digest,
 }
 
 impl hash::Hash for PublicKeyId {
