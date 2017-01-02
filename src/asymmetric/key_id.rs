@@ -7,8 +7,9 @@
 //! extern crate sodiumoxide;
 //! extern crate proj_crypto;
 //!
-//! use proj_crypto::asymmetric::key_exchange::*;
-//! use proj_crypto::asymmetric::key_exchange::key_id::*;
+//! use proj_crypto::asymmetric::key_exchange::gen_keypair;
+//! use proj_crypto::asymmetric::PublicKey;
+//! use proj_crypto::asymmetric::key_id::*;
 //! use std::collections::HashMap;
 //!
 //! # fn main() {
@@ -21,13 +22,8 @@
 //! db.insert(id_of_pk(&one.0), one.0.clone());
 //! db.insert(id_of_pk(&two.0), two.0.clone());
 //! db.insert(id_of_pk(&three.0), three.0.clone());
-
-//! // say we get a connection from identity 'two'
-//! let _ = LongTermKeys {
-//!     my_public_key: me.0,
-//!     my_secret_key: me.1,
-//!     their_public_key: find_public_key(&id_of_pk(&two.0), &db).unwrap(), // the unwrap is the test
-//! }; // now that we have a LongTermKeys, we can perform a key exchange
+//!
+//! let pk = find_public_key(&id_of_pk(&two.0), &db).unwrap();
 //! # }
 //! ```
 
@@ -54,6 +50,7 @@ use super::*;
 /// This has to be a custom struct so that I can implement std::hash::Hash
 #[derive(PartialEq, Eq, Debug)]
 pub struct PublicKeyId {
+    /// The structure just encapsulates this sha256 digest
     pub digest: sha256::Digest,
 }
 
@@ -93,13 +90,14 @@ mod tests {
     use super::super::*;
     extern crate sodiumoxide;
     use std::collections::HashMap;
+    use super::super::key_exchange::gen_keypair;
 
     #[test]
     fn find_public_key_correct() {
         sodiumoxide::init();
 
         // keypairs
-        let (me, one, two, three) = (gen_keypair(), gen_keypair(), gen_keypair(), gen_keypair());
+        let (one, two, three) = (gen_keypair(), gen_keypair(), gen_keypair());
 
         let mut db: HashMap<PublicKeyId, PublicKey> = HashMap::new();
 
@@ -108,13 +106,8 @@ mod tests {
         db.insert(id_of_pk(&three.0), three.0.clone());
 
         // say we get a connection from identity 'two'
-        let _ = LongTermKeys {
-            my_public_key: me.0,
-            my_secret_key: me.1,
-            their_public_key: find_public_key(&id_of_pk(&two.0), &db).unwrap(), // the unwrap is the test
-        };
-
-        // now that we have a LongTermKeys we can do the key exchange
+        // their public key will be this
+        let _ = find_public_key(&id_of_pk(&two.0), &db).unwrap(); // the unwrap is the test
     }
 
     #[test]
@@ -123,20 +116,15 @@ mod tests {
         sodiumoxide::init();
 
         // keypairs
-        let (me, one, two, unknown) = (gen_keypair(), gen_keypair(), gen_keypair(), gen_keypair());
+        let (one, two, unknown) = (gen_keypair(), gen_keypair(), gen_keypair());
 
         let mut db: HashMap<PublicKeyId, PublicKey> = HashMap::new();
 
         db.insert(id_of_pk(&one.0), one.0.clone());
         db.insert(id_of_pk(&two.0), two.0.clone());
 
-        let _ = LongTermKeys {
-            my_public_key: me.0,
-            my_secret_key: me.1,
-            their_public_key: find_public_key(&id_of_pk(&unknown.0), &db).unwrap(), // the unwrap is the test
-        };
-
-        // now that we have a LongTermKeys we can do the key exchange
+        // unknown is not in the map so the unwrap panics
+        let _ = find_public_key(&id_of_pk(&unknown.0), &db).unwrap(); // the unwrap is the test
     }
 
     #[test]
@@ -145,7 +133,7 @@ mod tests {
         sodiumoxide::init();
 
         // keypairs
-        let (me, one, two, three) = (gen_keypair(), gen_keypair(), gen_keypair(), gen_keypair());
+        let (one, two, three) = (gen_keypair(), gen_keypair(), gen_keypair());
 
         let mut db: HashMap<PublicKeyId, PublicKey> = HashMap::new();
 
@@ -154,12 +142,7 @@ mod tests {
         db.insert(id_of_pk(&three.0), three.0.clone());
 
         // say we get a connection from identity 'two'
-        let _ = LongTermKeys {
-            my_public_key: me.0,
-            my_secret_key: me.1,
-            their_public_key: find_public_key(&id_of_pk(&two.0), &db).unwrap(), // the unwrap is the test
-        };
-
-        // now that we have a LongTermKeys we can do the key exchange
+        // their public key will be this
+        let _ = find_public_key(&id_of_pk(&two.0), &db).unwrap(); // the unwrap is the test
     }
 }
