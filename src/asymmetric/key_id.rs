@@ -48,7 +48,7 @@ use super::*;
 /// Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope
 /// The type of the identifier used to specify the other party's public key.
 /// This has to be a custom struct so that I can implement std::hash::Hash
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct PublicKeyId {
     /// The structure just encapsulates this sha256 digest
     pub digest: sha256::Digest,
