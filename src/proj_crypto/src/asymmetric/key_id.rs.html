@@ -241,7 +241,7 @@
 <span class='doccomment'>/// Public Key - just an alias. Implements drop() so the memory will be wiped when it goes out of scope</span>
 <span class='doccomment'>/// The type of the identifier used to specify the other party&#39;s public key.</span>
 <span class='doccomment'>/// This has to be a custom struct so that I can implement std::hash::Hash</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PublicKeyId</span> {
     <span class='doccomment'>/// The structure just encapsulates this sha256 digest</span>
     <span class='kw'>pub</span> <span class='ident'>digest</span>: <span class='ident'>sha256</span>::<span class='ident'>Digest</span>,
