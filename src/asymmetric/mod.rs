@@ -20,6 +20,7 @@
 pub mod key_exchange;
 pub mod sign;
 pub mod key_id;
+pub mod commitments;
 
 use sodiumoxide::crypto::scalarmult::curve25519;
 

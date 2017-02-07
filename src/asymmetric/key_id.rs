@@ -87,7 +87,6 @@ pub fn id_of_pk(pk: &PublicKey) -> PublicKeyId {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::*;
     extern crate sodiumoxide;
     use std::collections::HashMap;
     use super::super::key_exchange::gen_keypair;

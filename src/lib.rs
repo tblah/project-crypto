@@ -27,6 +27,7 @@
 #![warn(unused_qualifications)]
 
 extern crate sodiumoxide;
+extern crate gmp;
 
 pub mod symmetric;
 pub mod asymmetric;
