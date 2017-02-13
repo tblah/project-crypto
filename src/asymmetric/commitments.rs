@@ -38,6 +38,9 @@ pub struct Commitment {
     data: Vec<u8>,
 }
 
+/// (p, q, g, h) where g and h are the bases suitable to be raised to a power forming the discrete logarithm problem, q is the subgroup in Z_p in which we will perform computations and p is the large prime which forms the large group. Calculations are done modulo p.
+pub type DHParams = (Mpz, Mpz, Mpz, Mpz);
+
 // max value is 2^max_2exp. 
 fn random_prime(min: &Mpz, max_2exp: u64) -> Option<Mpz> {
     if max_2exp <= (min.bit_length() as u64) {
@@ -125,7 +128,7 @@ fn verify_p(p: &Mpz) -> bool {
     true
 }
 
-fn verify_g(g: &Mpz, q: &Mpz, p: &Mpz) -> bool {
+fn verify_gh(g: &Mpz, q: &Mpz, p: &Mpz) -> bool {
     if *g == Mpz::from(1) {
         return false;
     }
@@ -138,10 +141,9 @@ fn verify_g(g: &Mpz, q: &Mpz, p: &Mpz) -> bool {
 }
 
 /// Generates diffie-hellman parameters appropriate for use with the commitments.
-/// On success returns Ok((p, q, g)) where g is the base to be raised to a power, q is the subgroup in Z_p in which we will perform computations and p is the large prime which forms the large group. Calculations are done modulo p.
 ///
 /// This will take a long time. The algorithm is the one presented on page 190 of "Cryptography Engineering" by Ferguson, Schneir and Kohono.
-pub fn gen_dh_params() -> Result<(Mpz, Mpz, Mpz), ()> {
+pub fn gen_dh_params() -> Result<DHParams, ()> {
     // seed gmp's random number generator
     let seed_bytes = randombytes(8);
     let mut seed = 0 as u64;
@@ -163,7 +165,7 @@ pub fn gen_dh_params() -> Result<(Mpz, Mpz, Mpz), ()> {
 
         // Choose p as a large (2048-4096 bit) prime of the form n * q + 1
         for _ in 1..1000 {
-            let mut n: Mpz;
+            let n: Mpz;
             loop {
                 let n_hopeful = rand.urandom_2exp(3840);
                 let mut n_min = Mpz::zero();
@@ -181,13 +183,22 @@ pub fn gen_dh_params() -> Result<(Mpz, Mpz, Mpz), ()> {
             if p.probab_prime_p(50) {
                 // find g
                 // choosing random alpha, set g =  alpha^n and check g is suitable
-                                loop {
+                loop {
                     let alpha = rand.urandom(&p);
                     let g = alpha.powm(&n, &p);
 
                     // check that g is suitable
-                    if verify_g(&g, &q, &p) {
-                        return Ok((p, q, g));
+                    if verify_gh(&g, &q, &p) {
+                        // find h (same as g)
+                        loop {
+                            let alpha = rand.urandom(&p);
+                            let h = alpha.powm(&n, &p);
+
+                            // verify that h is suitable or continue looping
+                            if verify_gh(&h, &q, &p) {
+                                return Ok((p, q, g, h));
+                            }
+                        }
                     }
                 }
             }
@@ -225,9 +236,10 @@ mod tests {
 
     #[test]
     fn gen_dh_params_test() {
-        let (p, q, g) = gen_dh_params().unwrap();
+        let (p, q, g, h) = gen_dh_params().unwrap();
         assert!(verify_p(&p));
         assert!(verify_q(&q, &p));
-        assert!(verify_g(&g, &q, &p));
+        assert!(verify_gh(&g, &q, &p));
+        assert!(verify_gh(&h, &q, &p));
     }
 }
