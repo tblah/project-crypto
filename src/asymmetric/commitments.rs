@@ -20,6 +20,14 @@ use gmp::mpz::Mpz;
 use gmp::rand;
 use sodiumoxide::utils::memzero;
 use sodiumoxide::randombytes::randombytes;
+use std::fs;
+use std::path::Path;
+use std::os::unix::fs::OpenOptionsExt;
+use std::io;
+use std::io::Write;
+use std::io::BufRead;
+use std::io::Error;
+use std::io::ErrorKind;
 
 /// The data required to open a commitment
 pub type Opening = (Vec<u8>, Mpz);
@@ -40,6 +48,71 @@ pub struct Commitment {
 
 /// (p, q, g, h) where g and h are the bases suitable to be raised to a power forming the discrete logarithm problem, q is the subgroup in Z_p in which we will perform computations and p is the large prime which forms the large group. Calculations are done modulo p.
 pub type DHParams = (Mpz, Mpz, Mpz, Mpz);
+
+/// Writes DHParams to a file
+pub fn write_dhparams<P: AsRef<Path>>(dhparams: &DHParams, path: P) -> io::Result<()> {
+    let mut file = try!(fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .mode(0o600) // rw-------
+        .open(path));
+
+    let &(ref p, ref q, ref g, ref h) = dhparams;
+
+    let _ = try!(file.write(&p.to_str_radix(16).into_bytes()));
+    let _ = try!(file.write(b"\n"));
+    let _ = try!(file.write(&q.to_str_radix(16).into_bytes()));
+    let _ = try!(file.write(b"\n"));
+    let _ = try!(file.write(&g.to_str_radix(16).into_bytes()));
+    let _ = try!(file.write(b"\n"));
+    let _ = try!(file.write(&h.to_str_radix(16).into_bytes()));
+
+    Ok(())
+}
+
+/// Reads and validates DHParams from a file
+pub fn read_dhparams<P: AsRef<Path>>(path: P) -> io::Result<DHParams> {
+    let file = try!(fs::File::open(path));
+    let mut reader = io::BufReader::new(file);
+
+    let (mut p_str, mut q_str, mut g_str, mut h_str) = (String::new(), String::new(), String::new(), String::new());
+    try!(reader.read_line(&mut p_str));
+    try!(reader.read_line(&mut q_str));
+    try!(reader.read_line(&mut g_str));
+    try!(reader.read_line(&mut h_str));
+
+    let p = match Mpz::from_str_radix(&p_str, 16) {
+        Ok(x) => x,
+        Err(_) => return Err(Error::new(ErrorKind::Other, "GMP Parse Error")),
+    };
+    let q = match Mpz::from_str_radix(&q_str, 16) {
+        Ok(x) => x,
+        Err(_) => return Err(Error::new(ErrorKind::Other, "GMP Parse Error")),
+    };
+    let g = match Mpz::from_str_radix(&g_str, 16) {
+        Ok(x) => x,
+        Err(_) => return Err(Error::new(ErrorKind::Other, "GMP Parse Error")),
+    };
+    let h = match Mpz::from_str_radix(&h_str, 16) {
+        Ok(x) => x,
+        Err(_) => return Err(Error::new(ErrorKind::Other, "GMP Parse Error")),
+    };
+
+    if !verify_p(&p) {
+        return Err(Error::new(ErrorKind::Other, "Read invalid parameter"));
+    }
+    if !verify_q(&q, &p) {
+        return Err(Error::new(ErrorKind::Other, "Read invalid parameter"));
+    }
+    if !verify_gh(&g, &q, &p) {
+        return Err(Error::new(ErrorKind::Other, "Read invalid parameter"));
+    }
+    if !verify_gh(&h, &q, &p) {
+        return Err(Error::new(ErrorKind::Other, "Read invalid parameter"));
+    }
+    Ok((p, q, g, h))
+}
 
 // max value is 2^max_2exp. 
 fn random_prime(min: &Mpz, max_2exp: u64) -> Option<Mpz> {
@@ -241,5 +314,15 @@ mod tests {
         assert!(verify_q(&q, &p));
         assert!(verify_gh(&g, &q, &p));
         assert!(verify_gh(&h, &q, &p));
+    }
+
+    #[test]
+    fn dh_params_file() {
+        let dh_params = gen_dh_params().unwrap();
+        let path = "./dh_params_file_test_deleteme.txt";
+        write_dhparams(&dh_params, path).unwrap();
+        let read_dh_params = read_dhparams(path).unwrap();
+        let _ = fs::remove_file(path);
+        assert!(read_dh_params == dh_params);
     }
 }
