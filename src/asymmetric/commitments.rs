@@ -29,11 +29,12 @@ use std::io::Error;
 use std::io::ErrorKind;
 use std::ops::Add;
 use std::ops::Mul;
+use std::cmp::{Eq, PartialEq};
 
 /// The data required to open a commitment: the data committed to and the random integer a
 pub type Opening = (Mpz, Mpz);
 
-/// The commitment it's self (just a wrapper so that I can impl stuff)
+/// The commitment its self as one would share along a wire
 #[derive(Clone)]
 pub struct Commitment {
     /// The numerical representation of the commitment
@@ -83,6 +84,30 @@ impl CommitmentContext {
             data: data,
             parameters: params.clone(),
         })
+    }
+
+    /// Generate a commitment onto some data (non-deterministic)
+    pub fn from_data(data: Mpz, params: DHParams) -> Result<CommitmentContext, &'static str> {
+        // generate a - as a random integer mod q
+        let seed_bytes = randombytes(8); // I trust libsodium more than gmp
+        let mut seed = 0 as u64;
+        for i in 0..8 {
+            seed |= (seed_bytes[i] as u64) << (i*8);
+        }
+        let mut rand = rand::RandState::new();
+        rand.seed_ui(seed);
+
+        let a = rand.urandom(&params.1 /* q */);
+
+        Self::from_opening((data, a), params)
+    }
+
+    /// Return the corresponding Commitment object
+    pub fn to_commitment(&self) -> Commitment {
+        Commitment {
+            x: self.commitment_value.clone(),
+            p: self.parameters.0.clone(),
+        }
     }
 }
 
@@ -157,6 +182,14 @@ impl<'a, 'b> Mul<&'a Mpz> for &'a Commitment {
         commit_mul_data(self.clone(), other.clone())
     }
 }
+
+impl PartialEq for Commitment {
+    fn eq(&self, other: &Commitment) -> bool {
+        self.x == other.x
+    }
+}
+
+impl Eq for Commitment {}
 
 /// (p, q, g, h) where g and h are the bases suitable to be raised to a power forming the discrete logarithm problem, q is the subgroup in Z_p in which we will perform computations and p is the large prime which forms the large group. Calculations are done modulo p.
 pub type DHParams = (Mpz, Mpz, Mpz, Mpz);
@@ -331,7 +364,7 @@ fn verify_gh(g: &Mpz, q: &Mpz, p: &Mpz) -> bool {
 /// This will take a long time. The algorithm is the one presented on page 190 of "Cryptography Engineering" by Ferguson, Schneir and Kohono.
 pub fn gen_dh_params() -> Result<DHParams, ()> {
     // seed gmp's random number generator
-    let seed_bytes = randombytes(8);
+    let seed_bytes = randombytes(8); // I trust libsodium more than gmp
     let mut seed = 0 as u64;
     for i in 0..8 {
         seed |= (seed_bytes[i] as u64) << (i*8);
