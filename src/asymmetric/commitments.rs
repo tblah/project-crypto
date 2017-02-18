@@ -74,7 +74,7 @@ impl CommitmentContext {
             return Err("We can only commit to (data mod q)");
         }
 
-        if &a >= q {
+        if &a >= p { // p because a may be arrived at by computations (mod p) and p > q
             return Err("Invalid a");
         }
         
@@ -88,17 +88,7 @@ impl CommitmentContext {
 
     /// Generate a commitment onto some data (non-deterministic)
     pub fn from_data(data: Mpz, params: DHParams) -> Result<CommitmentContext, &'static str> {
-        // generate a - as a random integer mod q
-        let seed_bytes = randombytes(8); // I trust libsodium more than gmp
-        let mut seed = 0 as u64;
-        for i in 0..8 {
-            seed |= (seed_bytes[i] as u64) << (i*8);
-        }
-        let mut rand = rand::RandState::new();
-        rand.seed_ui(seed);
-
-        let a = rand.urandom(&params.1 /* q */);
-
+        let a = random_a(&params.1);        
         Self::from_opening((data, a), params)
     }
 
@@ -109,6 +99,21 @@ impl CommitmentContext {
             p: self.parameters.0.clone(),
         }
     }
+}
+
+/// Return a suitable value for a to use in an opening
+pub fn random_a(q: &Mpz) -> Mpz {
+    // generate a - as a random integer mod q
+    let seed_bytes = randombytes(8); // I trust libsodium more than gmp
+    let mut seed = 0 as u64;
+    for i in 0..8 {
+        seed |= (seed_bytes[i] as u64) << (i*8);
+    }
+
+    let mut rand = rand::RandState::new();
+    rand.seed_ui(seed);
+
+    rand.urandom(q)
 }
 
 fn commit_add_data(c1: Commitment, c2: Commitment) -> Commitment {
@@ -429,6 +434,7 @@ pub fn gen_dh_params() -> Result<DHParams, ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sodiumoxide;
 
     #[test]
     fn random_prime_test() {
@@ -439,12 +445,14 @@ mod tests {
     }
 
     #[test]
+    #[ignore] // gen_dh_params() takes ages
     fn gen_dh_params_test() {
         let params = gen_dh_params().unwrap();
         assert!(verify_dh_params(&params));
     }
 
     #[test]
+    #[ignore] // gen_dh_params() takes ages
     fn dh_params_file() {
         let dh_params = gen_dh_params().unwrap();
         let path = "./dh_params_file_test_deleteme.txt";
@@ -452,5 +460,43 @@ mod tests {
         let read_dh_params = read_dhparams(path).unwrap();
         let _ = fs::remove_file(path);
         assert!(read_dh_params == dh_params);
+    }
+
+    fn rand_u64() -> u64 {
+        let data_bytes = randombytes(8);
+        let mut data = 0 as u64;
+        for i in 0..8 {
+            data |= (data_bytes[i] as u64) << (i*8);
+        }   
+        data
+    }
+    
+    #[test]
+    #[ignore] // gen_dh_params() takes ages
+    fn homeorphic() {
+        sodiumoxide::init();
+
+        let co_eff1 = Mpz::from(rand_u64());
+        let co_eff2 = Mpz::from(rand_u64());
+        let data1 = Mpz::from(rand_u64());
+        let data2 = Mpz::from(rand_u64());
+        let result = data1.clone()*co_eff1.clone() + data2.clone()*co_eff2.clone(); // assume this does not become greater than p
+
+        let params = gen_dh_params().unwrap();
+        let a = random_a(&params.1);
+        let a_result = (a.clone()*co_eff1.clone() + a.clone()*co_eff2.clone()).modulus(&params.0);
+
+        let context1 = CommitmentContext::from_opening((data1, a.clone()), params.clone()).unwrap();
+        let context2 = CommitmentContext::from_opening((data2, a.clone()), params.clone()).unwrap();
+        let context_result = CommitmentContext::from_opening((result, a_result), params.clone()).unwrap();
+
+        let commit1 = context1.to_commitment();
+        let commit2 = context2.to_commitment();
+        let commit_result = context_result.to_commitment();
+
+        let commit_blind_result = (commit1 * co_eff1) + (commit2 * co_eff2);
+
+        assert!(commit_result == commit_blind_result);
+
     }
 }
