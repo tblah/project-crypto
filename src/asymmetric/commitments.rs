@@ -1,8 +1,54 @@
 //! Implementation of Pedersen's Commitment scheme 
 //! http://download.springer.com/static/pdf/357/chp%253A10.1007%252F3-540-46766-1_9.pdf
-
+//!
 //! **The implementation here is likely to be particularly sketchy as I really do not understand the maths behind the discrete logarithm problem.
 //! The advice not to use this for anything important holds particularly strongly here.**
+//!
+//! # Example - Homomorphic Commitments
+//! This example demonstrates the homorphic properties of Pedersen Commitments.
+//!
+//! ```
+//! # extern crate proj_crypto;
+//! # extern crate sodiumoxide;
+//! # extern crate gmp;
+//! use proj_crypto::asymmetric::commitments::*;
+//! use gmp::mpz::Mpz;
+//! # use sodiumoxide::randombytes::randombytes;
+//! # fn rand_u64() -> u64 {
+//! #    let data_bytes = randombytes(8);
+//! #    let mut data = 0 as u64;
+//! #    for i in 0..8 {
+//! #        data |= (data_bytes[i] as u64) << (i*8);
+//! #    }   
+//! #    data
+//! # }
+//!
+//! # fn main() {
+//! sodiumoxide::init();
+//!
+//! let co_eff1 = Mpz::from(rand_u64());
+//! let co_eff2 = Mpz::from(rand_u64());
+//! let data1 = Mpz::from(rand_u64());
+//! let data2 = Mpz::from(rand_u64());
+//! let result = data1.clone()*co_eff1.clone() + data2.clone()*co_eff2.clone(); // assume this does not become greater than p
+//!
+//! let params = gen_dh_params().unwrap(); // this step can take a long time
+//! let a = random_a(&params.1);
+//! let a_result = (a.clone()*co_eff1.clone() + a.clone()*co_eff2.clone()).modulus(&params.0);
+//!
+//! let context1 = CommitmentContext::from_opening((data1, a.clone()), params.clone()).unwrap();
+//! let context2 = CommitmentContext::from_opening((data2, a.clone()), params.clone()).unwrap();
+//! let context_result = CommitmentContext::from_opening((result, a_result), params.clone()).unwrap();
+//!
+//! let commit1 = context1.to_commitment();
+//! let commit2 = context2.to_commitment();
+//! let commit_result = context_result.to_commitment();
+//!
+//! let commit_blind_result = (commit1 * co_eff1) + (commit2 * co_eff2);
+//!
+//! assert!(commit_result == commit_blind_result);
+//! # }
+//! ```
 
 /*  This file is part of project-crypto.
     project-crypto is free software: you can redistribute it and/or modify
@@ -434,7 +480,6 @@ pub fn gen_dh_params() -> Result<DHParams, ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sodiumoxide;
 
     #[test]
     fn random_prime_test() {
@@ -460,43 +505,5 @@ mod tests {
         let read_dh_params = read_dhparams(path).unwrap();
         let _ = fs::remove_file(path);
         assert!(read_dh_params == dh_params);
-    }
-
-    fn rand_u64() -> u64 {
-        let data_bytes = randombytes(8);
-        let mut data = 0 as u64;
-        for i in 0..8 {
-            data |= (data_bytes[i] as u64) << (i*8);
-        }   
-        data
-    }
-    
-    #[test]
-    #[ignore] // gen_dh_params() takes ages
-    fn homeorphic() {
-        sodiumoxide::init();
-
-        let co_eff1 = Mpz::from(rand_u64());
-        let co_eff2 = Mpz::from(rand_u64());
-        let data1 = Mpz::from(rand_u64());
-        let data2 = Mpz::from(rand_u64());
-        let result = data1.clone()*co_eff1.clone() + data2.clone()*co_eff2.clone(); // assume this does not become greater than p
-
-        let params = gen_dh_params().unwrap();
-        let a = random_a(&params.1);
-        let a_result = (a.clone()*co_eff1.clone() + a.clone()*co_eff2.clone()).modulus(&params.0);
-
-        let context1 = CommitmentContext::from_opening((data1, a.clone()), params.clone()).unwrap();
-        let context2 = CommitmentContext::from_opening((data2, a.clone()), params.clone()).unwrap();
-        let context_result = CommitmentContext::from_opening((result, a_result), params.clone()).unwrap();
-
-        let commit1 = context1.to_commitment();
-        let commit2 = context2.to_commitment();
-        let commit_result = context_result.to_commitment();
-
-        let commit_blind_result = (commit1 * co_eff1) + (commit2 * co_eff2);
-
-        assert!(commit_result == commit_blind_result);
-
     }
 }
