@@ -91,7 +91,9 @@ pub struct Commitment {
 
 impl Commitment {
     /// Creates a Commitment from raw parts
-    pub fn from_parts(x: Mpz, p: Mpz) -> Result<Commitment, ()> {
+    pub fn from_parts(x: Mpz, p: Mpz, check_p: bool) -> Result<Commitment, ()> {
+        if !check_p {return Ok( Commitment { x: x, p: p } )};
+            
         if verify_p(&p) {
             return Ok( Commitment { x: x, p: p } );
         }
