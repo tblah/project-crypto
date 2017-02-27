@@ -89,6 +89,17 @@ pub struct Commitment {
     pub p: Mpz,
 }
 
+impl Commitment {
+    /// Creates a Commitment from raw parts
+    pub fn from_parts(x: Mpz, p: Mpz) -> Result<Commitment, ()> {
+        if verify_p(&p) {
+            return Ok( Commitment { x: x, p: p } );
+        }
+
+        Err(())
+    }
+}
+
 /// A structure containing all the data relating to a commitment. This contains secrets. Drop has been implemented for Mpz to clear the memory when it goes out of scope.
 pub struct CommitmentContext {
     /// A random integer modulo q. This is called the binding number. This is secret.
