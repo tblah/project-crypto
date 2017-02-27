@@ -392,15 +392,11 @@ fn verify_p(p: &Mpz) -> bool {
         return false;
     }
 
-    println!("p is big enough");
-
     let mut p_max = Mpz::zero();
     p_max.setbit(4097);
     if p > &p_max {
         return false;
     }
-
-    println!(" p is small enough");
 
     if !p.probab_prime_p(50) {
         return false;
