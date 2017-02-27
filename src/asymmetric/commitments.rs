@@ -385,7 +385,6 @@ fn verify_q(q: &Mpz, p: &Mpz) -> bool {
 }
 
 fn verify_p(p: &Mpz) -> bool {
-    println!("ping");
     let mut p_min = Mpz::zero();
     p_min.setbit(2045);
     if p < &p_min {
