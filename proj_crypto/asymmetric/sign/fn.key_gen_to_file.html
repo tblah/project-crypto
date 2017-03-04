@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `sign` mod in crate `proj_crypto`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, sign">
+    <meta name="description" content="API documentation for the Rust `key_gen_to_file` fn in crate `proj_crypto`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, key_gen_to_file">
 
-    <title>proj_crypto::asymmetric::sign - Rust</title>
+    <title>proj_crypto::asymmetric::sign::key_gen_to_file - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
@@ -28,7 +28,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='../../index.html'>proj_crypto</a>::<wbr><a href='../index.html'>asymmetric</a></p><script>window.sidebarCurrent = {name: 'sign', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+        <p class='location'><a href='../../index.html'>proj_crypto</a>::<wbr><a href='../index.html'>asymmetric</a>::<wbr><a href='index.html'>sign</a></p><script>window.sidebarCurrent = {name: 'key_gen_to_file', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -42,33 +42,15 @@
         </form>
     </nav>
 
-    <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>proj_crypto</a>::<wbr><a href='../index.html'>asymmetric</a>::<wbr><a class='mod' href=''>sign</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>proj_crypto</a>::<wbr><a href='../index.html'>asymmetric</a>::<wbr><a href='index.html'>sign</a>::<wbr><a class='fn' href=''>key_gen_to_file</a></span><span class='out-of-band'><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a class='srclink' href='../../../src/proj_crypto/asymmetric/sign.rs.html#1-200' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Public Key Signatures</p>
-
-<p>Just re-exports of sodiumoxide</p>
-</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
-<table><tr><td><code>pub use sodiumoxide::crypto::sign::<a class='mod' href='../../../sodiumoxide/crypto/sign/ed25519/index.html' title='sodiumoxide::crypto::sign::ed25519'>ed25519</a>::*;</code></td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.get_keys.html'
-                                  title='proj_crypto::asymmetric::sign::get_keys'>get_keys</a></td>
-                           <td class='docblock-short'>
-                                <p>Reads keys from a file. Returns (their_pk, my_pk, my_sk)</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.key_gen_to_file.html'
-                                  title='proj_crypto::asymmetric::sign::key_gen_to_file'>key_gen_to_file</a></td>
-                           <td class='docblock-short'>
-                                <p>Generate a keypair and put it into the specified file
+               </span><a class='srclink' href='../../../src/proj_crypto/asymmetric/sign.rs.html#42-82' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn key_gen_to_file&lt;P:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>&gt;(file_path: P) <span class='where'>where <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;P&gt;</span></pre><div class='docblock'><p>Generate a keypair and put it into the specified file
 This is not memory tidy. It would be difficult to clear the memory properly here and I don&#39;t think it matters too much because this doesn&#39;t connect to the network</p>
-                           </td>
-                       </tr></table></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

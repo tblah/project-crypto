@@ -1,1 +1,1 @@
-initSidebarItems({});
+initSidebarItems({"fn":[["get_keys","Reads keys from a file. Returns (their_pk, my_pk, my_sk)"],["key_gen_to_file","Generate a keypair and put it into the specified file This is not memory tidy. It would be difficult to clear the memory properly here and I don't think it matters too much because this doesn't connect to the network"]]});
