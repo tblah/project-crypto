@@ -157,10 +157,9 @@ fn open_or_panic<P: AsRef<Path> + Display + Clone>(path: P) -> fs::File {
     }
 }
 
-/// Reads keys from a file. Returns (their_pk, my_pk, my_sk)
-pub fn get_keys<P1: AsRef<Path> + Display + Clone, P2: AsRef<Path> + Display + Clone>(my_keypair_path: P1, their_pk_path: P2) -> (PublicKey, PublicKey, SecretKey) {
+/// Reads keys from a file. Returns (my_pk, my_sk)
+pub fn get_keypair<P1: AsRef<Path> + Display + Clone>(my_keypair_path: P1) -> (PublicKey, SecretKey) {
     let my_keypair_file = open_or_panic(my_keypair_path);
-    let pk_file = open_or_panic(their_pk_path);
 
     // get my keypair
     let (mut my_keypair_file, pk_bytes) = get_key_from_file(my_keypair_file, "PK").unwrap();
@@ -172,13 +171,20 @@ pub fn get_keys<P1: AsRef<Path> + Display + Clone, P2: AsRef<Path> + Display + C
     let my_pk = PublicKey::from_slice(&pk_bytes).unwrap();
     let my_sk = SecretKey::from_slice(&sk_bytes).unwrap();
 
+    (my_pk, my_sk)
+}
+
+/// Reads a public key from a file
+pub fn get_pubkey<P1: AsRef<Path> + Display + Clone>(their_pk_path: P1) -> PublicKey {
+    let pk_file = open_or_panic(their_pk_path);
+
     // get the trusted public key
     let result = get_key_from_file(pk_file, "PK");
 
     let (_, pk_bytes) = result.unwrap();
     let their_pk = PublicKey::from_slice(&pk_bytes).unwrap();
 
-    (their_pk, my_pk, my_sk)
+    their_pk
 }
 
 /*********************** Tests **************************/
@@ -193,7 +199,8 @@ mod tests {
         let test_file_path_pub = String::from(test_file_path) + ".pub";
         
         key_gen_to_file(test_file_path);
-        let _ = get_keys(test_file_path, &test_file_path_pub);
+        let _ = get_keypair(test_file_path);
+        let _ = get_pubkey(&test_file_path_pub);
         remove_file(test_file_path).unwrap();
         remove_file(test_file_path_pub).unwrap();
     }
