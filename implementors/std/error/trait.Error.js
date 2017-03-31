@@ -1,4 +1,5 @@
 (function() {var implementors = {};
+implementors["gmp"] = ["impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='struct' href='gmp/mpz/struct.ParseMpzError.html' title='gmp::mpz::ParseMpzError'>ParseMpzError</a>","impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='struct' href='gmp/mpq/struct.ParseMpqError.html' title='gmp::mpq::ParseMpqError'>ParseMpqError</a>",];
 implementors["libc"] = [];
 implementors["serde"] = ["impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a>",];
 
