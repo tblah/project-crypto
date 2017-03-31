@@ -10,5 +10,4 @@ repository = "https://github.com/tblah/project-crypto"
 
 [dependencies]
 sodiumoxide = "0.0.12"
-gmp = "0.3.1"
-
+rust-gmp = {git = "https://github.com/fizyk20/rust-gmp", rev = "f3e0a8962206ecf7d21ac7d0a9635c7eff5ce7ff"}

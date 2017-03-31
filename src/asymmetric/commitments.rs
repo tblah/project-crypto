@@ -62,7 +62,7 @@
     You should have received a copy of the GNU General Public License
 along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
-use gmp::mpz::Mpz;
+use gmp::mpz::{Mpz, ProbabPrimeResult};
 use gmp::rand;
 use sodiumoxide::randombytes::randombytes;
 use std::fs;
@@ -352,7 +352,7 @@ fn random_prime(min: &Mpz, max_2exp: u64) -> Option<Mpz> {
             continue; // don't decrement the counter in this case because the heuristic I am using does not take this into account
         }
             
-        if n.probab_prime_p(50) {
+        if n.probab_prime(50) != ProbabPrimeResult::NotPrime {
             return Some(n);
         }
 
@@ -379,7 +379,7 @@ fn verify_q(q: &Mpz, p: &Mpz) -> bool {
         return false;
     }
 
-    if !q.probab_prime_p(50) {
+    if q.probab_prime(50) == ProbabPrimeResult::NotPrime {
         return false;
     }
 
@@ -399,7 +399,7 @@ fn verify_p(p: &Mpz) -> bool {
         return false;
     }
 
-    if !p.probab_prime_p(50) {
+    if p.probab_prime(50) == ProbabPrimeResult::NotPrime {
         return false;
     }
 
@@ -458,7 +458,7 @@ pub fn gen_dh_params() -> Result<DHParams, ()> {
             }
 
             let p: Mpz = n.clone() * q.clone() + Mpz::from(1);
-            if p.probab_prime_p(50) {
+            if p.probab_prime(50) != ProbabPrimeResult::NotPrime {
                 // find g
                 // choosing random alpha, set g =  alpha^n and check g is suitable
                 loop {
@@ -492,7 +492,7 @@ mod tests {
     #[test]
     fn random_prime_test() {
         let p = random_prime(&Mpz::from(3), 3).unwrap();
-        assert!(p.probab_prime_p(12));
+        assert!(p.probab_prime(12) != ProbabPrimeResult::NotPrime);
         assert!(p > Mpz::from(2));
         assert!(p < Mpz::from(8));
     }
