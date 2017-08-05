@@ -192,6 +192,19 @@ pub fn get_pubkey<P1: AsRef<Path> + Display + Clone>(their_pk_path: P1) -> Publi
 mod tests {
     use super::*;
     use std::fs::remove_file;
+    extern crate sodiumoxide;
+    extern crate test;
+    use sodiumoxide::randombytes::randombytes;
+    use self::test::Bencher;
+
+    #[bench]
+    fn sign_bench(b: &mut Bencher) {
+        sodiumoxide::init();
+        let (pk, sk) = gen_keypair();
+        let data = randombytes(8);
+        
+        b.iter(|| sign(&data, &sk) );
+    }
 
     #[test]
     fn key_files() {

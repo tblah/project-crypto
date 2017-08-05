@@ -19,6 +19,7 @@
     You should have received a copy of the GNU General Public License
     along with project-crypto.  If not, see http://www.gnu.org/licenses/.*/
 
+#![feature(test)]
 #![crate_name = "proj_crypto"]
 #![crate_type = "lib"]
 #![warn(missing_docs)]

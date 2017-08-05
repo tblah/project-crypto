@@ -488,6 +488,37 @@ pub fn gen_dh_params() -> Result<DHParams, ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    extern crate test;
+    extern crate sodiumoxide;
+    use self::test::Bencher;
+    use sodiumoxide::randombytes::randombytes;
+
+    fn rand_u64() -> u64 {
+       let data_bytes = randombytes(8);
+       let mut data = 0 as u64;
+       for i in 0..8 {
+           data |= (data_bytes[i] as u64) << (i*8);
+        }   
+        data
+    }
+
+    #[bench]
+    fn raw_commitment(b: &mut Bencher) {
+        sodiumoxide::init();
+        let data = Mpz::from(rand_u64());
+        let params = gen_dh_params().unwrap(); // slow :(
+        let a = random_a(&params.1);
+
+        b.iter(|| CommitmentContext::from_opening((data.clone(), a.clone()), params.clone()).unwrap());
+    }
+
+    #[bench]
+    fn random_a_bench(b: &mut Bencher) {
+        sodiumoxide::init();
+        let params = gen_dh_params().unwrap(); // slow :(
+
+        b.iter(|| random_a(&params.1) );
+    }
 
     #[test]
     fn random_prime_test() {
